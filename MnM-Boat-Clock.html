@@ -136,7 +136,7 @@ td.n { width: 52px; }
       <div class="side">
         <span class="pill night" id="dn"><span class="dot"></span><span id="dntext">Night</span></span>
         <div class="real" id="dnnext">Dawn in 0:00</div>
-        <div class="real">Real time <b class="mono" id="rtime">--:--</b></div>
+        <div class="real">Your time <b class="mono" id="rtime">--:--</b></div>
       </div>
     </div>
     <div>
@@ -152,12 +152,13 @@ td.n { width: 52px; }
     <div class="board" id="board"></div>
   </section>
 
-  <p class="foot">Game clock: 1 real minute = 20 game minutes, so a game day lasts 72 real minutes and game day 1 starts at midnight UTC. This is the same calculation as the wiki's Game Time widget. Boat times come from the wiki's <a href="https://monstersandmemories.miraheze.org/wiki/Boats" target="_blank" rel="noopener">Boats page</a>. Positions between stops are estimated. Real times are shown in Sydney time.</p>
+  <p class="foot">Game clock: 1 real minute = 20 game minutes, so a game day lasts 72 real minutes and game day 1 starts at midnight UTC. This is the same calculation as the wiki's Game Time widget. Boat times come from the wiki's <a href="https://monstersandmemories.miraheze.org/wiki/Boats" target="_blank" rel="noopener">Boats page</a>. Positions between stops are estimated. Real times are shown in your own time zone (<span id="tzname">detected from your device</span>) and adjust for daylight saving automatically.</p>
 </div>
 
 <script>
 (function () {
-  const TZ = "Australia/Sydney";
+  let TZ;
+  try { TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch (e) { TZ = undefined; }
   const MONTHS = ["Sundawn","Frostmelt","Earthtill","Heartsblood","Springsend","Sunpeak","Midsummer","Meldulstand","Harvesttide","Sheafall","Dyingember","Longwinter"];
   const DAYS = ["Rellden","Eltinden","Sorophden","Tremden","Krivden","Tilustden","Matsden"];
   const REAL_MS_PER_GAME_HOUR = 180000; // 3 real minutes
@@ -202,8 +203,9 @@ td.n { width: 52px; }
   ROUTES.forEach(r => r.events.sort((a, b) => a.t - b.t));
 
   const $ = id => document.getElementById(id);
-  const fmtReal = new Intl.DateTimeFormat("en-AU", { timeZone: TZ, hour: "numeric", minute: "2-digit", hour12: true });
-  const fmtRealSec = new Intl.DateTimeFormat("en-AU", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true, timeZoneName: "short" });
+  const fmtReal = new Intl.DateTimeFormat(undefined, { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+  const fmtRealSec = new Intl.DateTimeFormat(undefined, { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+  if ($("tzname")) $("tzname").textContent = (TZ || "local time").replace(/_/g, " ");
 
   function ordinal(n) { if (n > 3 && n < 21) return n + "th"; return n + ({1:"st",2:"nd",3:"rd"}[n % 10] || "th"); }
   function gameClock(h) {
