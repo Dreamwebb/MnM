@@ -23,6 +23,7 @@
   --night-soft: #d7e1f1;
   --go: #2f7a4f;
   --track: #c4ccd8;
+  --zone: rgba(61, 95, 150, .07);
   --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
   --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -31,13 +32,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0e141c; --surface: #161f2b; --line: #263345; --fg: #e7e3da; --muted: #93a0b2;
     --accent: #d2ab55; --day: #e8c46a; --day-soft: #3a3220; --night: #86a8dc; --night-soft: #1c2a40;
-    --go: #6cc08f; --track: #33435a; color-scheme: dark;
+    --go: #6cc08f; --track: #33435a; --zone: rgba(134, 168, 220, .07); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e141c; --surface: #161f2b; --line: #263345; --fg: #e7e3da; --muted: #93a0b2;
   --accent: #d2ab55; --day: #e8c46a; --day-soft: #3a3220; --night: #86a8dc; --night-soft: #1c2a40;
-  --go: #6cc08f; --track: #33435a; color-scheme: dark;
+  --go: #6cc08f; --track: #33435a; --zone: rgba(134, 168, 220, .07); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
@@ -78,17 +79,20 @@ h2 { font-size: 19px; }
 /* Routes */
 .routes { display: grid; gap: 20px; }
 .track-wrap { overflow-x: auto; }
-.track { position: relative; height: 112px; min-width: 520px; margin: 0 40px; }
-.rail { position: absolute; left: 0; right: 0; top: 55px; height: 2px; background: var(--track); }
-.zone { position: absolute; top: 46px; height: 20px; border-left: 1px dashed var(--track); }
-.station { position: absolute; top: 49px; transform: translateX(-50%); display: grid; justify-items: center; }
-.station i { width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); }
-.station span { position: absolute; top: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--muted); }
-.stop i { width: 10px; height: 10px; border-width: 2px; margin-top: 2px; border-color: var(--muted); }
-.boat { position: absolute; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; transition: left .9s linear; }
+.track { position: relative; height: 150px; min-width: 560px; margin: 0 48px; }
+.rail { position: absolute; left: 0; right: 0; top: 74px; height: 2px; background: var(--track); }
+.zone { position: absolute; top: 18px; bottom: 26px; border-left: 1px dashed var(--track); border-right: 1px dashed var(--track); background: var(--zone); border-radius: 4px; }
+.zone-name { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; font-weight: 600; }
+.station { position: absolute; top: 68px; width: 14px; height: 14px; margin-left: -7px; }
+.station i { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); border: 3px solid var(--accent); }
+.stop { top: 70px; width: 10px; height: 10px; margin-left: -5px; }
+.stop i { width: 10px; height: 10px; border-width: 2px; border-color: var(--fg); }
+.station-name { position: absolute; top: 130px; transform: translateX(-50%); font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--fg); }
+.station-name.minor { color: var(--muted); font-weight: 400; }
+.boat { position: absolute; transform: translateX(-50%); display: grid; justify-items: center; gap: 2px; transition: left .9s linear; z-index: 1; }
 .boat b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--fg); color: var(--surface); font-size: 13px; font-family: var(--font-mono); }
-.boat.out { top: 6px; }
-.boat.back { top: 72px; }
+.boat.out { top: 24px; }
+.boat.back { top: 86px; }
 .boat.docked b { background: var(--accent); }
 .boat em { font-style: normal; font-size: 11px; color: var(--muted); line-height: 1; }
 .legend { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
@@ -104,7 +108,8 @@ td.n { width: 52px; }
 .tbl { overflow-x: auto; }
 
 /* Board */
-.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) { .board { grid-template-columns: 1fr; } }
 .port { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 6px; min-width: 0; }
 .port h3 { margin: 0; font-family: var(--font-display); font-size: 15px; letter-spacing: .03em; }
 .port .here { font-size: 13px; color: var(--accent); font-weight: 600; min-height: 1.4em; }
@@ -169,23 +174,23 @@ td.n { width: 52px; }
   const ROUTES = [
     {
       id: "surface", name: "Surface boats", ends: ["Keeper's Bight", "Night Harbor"],
-      stations: [{name:"Keeper's Bight", pos:0}, {name:"Shallow Shoals", pos:.5, stop:true}, {name:"Night Harbor", pos:1}],
-      zones: [],
+      stations: [{name:"Keeper's Bight", pos:0}, {name:"Player Island", pos:.4, stop:true}, {name:"Zaedin's Landing", pos:.6, stop:true}, {name:"Night Harbor", pos:1}],
+      zones: [{name:"Shallow Shoals", from:.3, to:.7}],
       events: [
         {t:2,  kind:"arrive", place:"Keeper's Bight", pos:0, leg:"dock"},
         {t:5,  kind:"depart", place:"Keeper's Bight", pos:0, leg:"out"},
-        {t:8,  kind:"call",   place:"Shallow Shoals (dock 1)", pos:.42, leg:"out"},
-        {t:10, kind:"call",   place:"Shallow Shoals (dock 2)", pos:.58, leg:"out"},
+        {t:8,  kind:"call",   place:"Player Island, Shallow Shoals", pos:.4, leg:"out"},
+        {t:10, kind:"call",   place:"Zaedin's Landing, Shallow Shoals", pos:.6, leg:"out"},
         {t:15, kind:"arrive", place:"Night Harbor", pos:1, leg:"dock"},
         {t:17, kind:"depart", place:"Night Harbor", pos:1, leg:"back"},
-        {t:22, kind:"call",   place:"Shallow Shoals (dock 1)", pos:.58, leg:"back"},
-        {t:23, kind:"call",   place:"Shallow Shoals (dock 2)", pos:.42, leg:"back"}
+        {t:22, kind:"call",   place:"Player Island, Shallow Shoals", pos:.4, leg:"back"},
+        {t:23, kind:"call",   place:"Zaedin's Landing, Shallow Shoals", pos:.6, leg:"back"}
       ]
     },
     {
       id: "deep", name: "The Deep boats", ends: ["Underdocks", "Ail'Vorith"],
       stations: [{name:"Underdocks", pos:0}, {name:"Ail'Vorith", pos:1}],
-      zones: [{name:"Caves of Irem", from:.25}, {name:"Great Cavern Sea", from:.5}, {name:"Ail'Vorith", from:.75}],
+      zones: [{name:"Underdocks", from:0, to:.25}, {name:"Caves of Irem", from:.25, to:.5}, {name:"Great Cavern Sea", from:.5, to:.75}, {name:"Ail'Vorith", from:.75, to:1}],
       events: [
         {t:7,  kind:"arrive", place:"Underdocks", pos:0, leg:"dock"},
         {t:11, kind:"depart", place:"Underdocks", pos:0, leg:"out"},
@@ -251,12 +256,11 @@ td.n { width: 52px; }
     sec.innerHTML =
       '<h2>' + r.name + '</h2>' +
       '<div class="track-wrap"><div class="track" id="track-' + r.id + '"><div class="rail"></div>' +
-      r.zones.map(z => '<div class="zone" style="left:' + z.from * 100 + '%"></div>').join("") +
-      r.stations.map(s => '<div class="station' + (s.stop ? " stop" : "") + '" style="left:' + s.pos * 100 + '%"><i></i><span>' + s.name + '</span></div>').join("") +
+      r.zones.map(z => '<div class="zone" style="left:' + z.from * 100 + '%;width:' + (z.to - z.from) * 100 + '%"></div><div class="zone-name" style="left:' + (z.from + z.to) * 50 + '%">' + z.name + '</div>').join("") +
+      r.stations.map(s => '<div class="station' + (s.stop ? " stop" : "") + '" style="left:' + s.pos * 100 + '%"><i></i></div><div class="station-name' + (s.stop ? " minor" : "") + '" style="left:' + s.pos * 100 + '%">' + s.name + '</div>').join("") +
       [1,2,3].map(b => '<div class="boat" id="boat-' + r.id + '-' + b + '"><b>' + b + '</b><em></em></div>').join("") +
       '</div></div>' +
       '<div class="legend"><span>Above the line: heading to ' + r.ends[1] + '</span><span>Below: heading to ' + r.ends[0] + '</span>' +
-      (r.zones.length ? '<span>Dashed marks: ' + r.zones.map(z => z.name).join(" → ") + '</span>' : '') +
       (r.note ? '<span>' + r.note + '</span>' : '') + '</div>' +
       '<div class="tbl"><table><thead><tr><th>Boat</th><th>Now</th><th>Next</th></tr></thead><tbody id="rows-' + r.id + '"></tbody></table></div>';
     routesEl.appendChild(sec);
