@@ -661,19 +661,19 @@ td { padding-block: 10px; }
 
   // ---- Moons ----
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
-  // Phases measured from in-game screenshots: 10:53-11:08 AM and 12:27 PM AEDT, 24 Oct 2026 (~1.3 game days apart).
-  // Great moon stayed ~31% lit (waning crescent) and Gold went ~95% -> ~93% (just past full), so both cycle very slowly:
-  // at least ~90 game days. 120 / 90 game days are estimates. Ice moon: ~28% lit (waning) at 11:00, invisible (new) at 12:27 where it should sit, so ~7 game days per cycle.
-  const MOON_EPOCH = Date.UTC(2026, 9, 24, 1, 27, 30); // 12:27 PM AEDT, 24 Oct 2026
+  // Phases measured from in-game screenshots on 24 Oct 2026 (AEDT): 10:53-11:08 AM, 12:27 PM and 2:24 PM.
+  // Ice: ~28% -> ~7% lit over ~2.8 game days, lit edge stayed on the same side (waning, not yet new) => ~30 game days per cycle.
+  // Great (~31-35%) and Gold (~93-95%) did not change measurably in 3.5 real hours => at least ~200 game days; 240 / 180 are estimates.
+  const MOON_EPOCH = Date.UTC(2026, 9, 24, 3, 24, 40); // 2:24 PM AEDT, 24 Oct 2026
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .995, cycle: 7,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: .6,
+    { name: "Ice moon",   phase0: .915, cycle: 30,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 2.36,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [24, 34, 70], darkA: .7, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .812, cycle: 120, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: .18,
+    { name: "Great moon", phase0: .805, cycle: 240, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [26, 32, 70], darkA: .85, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .585, cycle: 90, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
+    { name: "Gold moon",  phase0: .572, cycle: 180, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { const gd = (Date.now() - MOON_EPOCH) / 4320000; return (((m.phase0 + gd / m.cycle) % 1) + 1) % 1; };
@@ -837,21 +837,23 @@ td { padding-block: 10px; }
       // Their spacing comes from the in-game screenshots (Ice up-left of the Great moon, Gold down-right at about half that distance).
       const narrow = br.width < 600;
       const OFF = [[-300, -154], [0, 0], [147, 75]], SHIFT = [-76, -39], RAD = [18, 36, 9];
-      const s = narrow ? Math.min(1, (br.width - 30) / 560, bh / 340) : Math.min(1, (br.width - 80) / 700, bh / 330);
+      const s = narrow ? Math.min(1, (br.width - 30) / 560, bh / 340) : Math.min(1, (br.width - 80) / 760, (bh - 30) / 260);
       if (n > .02) {
         const f = clamp(((gh - 18 + 24) % 24) / 12, 0, 1);      // 0 at dusk (6 PM), 1 at dawn (6 AM)
         const travel = Math.max(0, br.width - 560 * s) * .92;
         const gx = br.left + br.width / 2 + (f - .5) * travel;
-        const lab = narrow ? 40 : 48;   // room for the labels under the lowest moon
-        const gyMin = br.top + (154 - 39 + 18) * s + 6, gyMax = br.bottom - (75 + 39 + 9) * s - lab - 6;
+        // keep the whole group, labels included, inside the strip (wide screens put labels beside the moons, phones put them underneath)
+        const rIce = Math.max(MOONS[0].min, RAD[0] * s), rGold = Math.max(MOONS[2].min * (narrow ? .7 : 1), RAD[2] * s);
+        const gyMin = br.top + (154 - 39) * s + Math.max(rIce, narrow ? 0 : 20) + 6;
+        const gyMax = br.bottom - (75 + 39) * s - (narrow ? rGold + 40 : Math.max(rGold, 20)) - 6;
         const gy = clamp(br.top + bh * .46 + (1 - Math.sin(Math.PI * f)) * bh * .2, gyMin, Math.max(gyMin, gyMax));
         MOONS.forEach((m, i) => {
           const x = gx + (OFF[i][0] - SHIFT[0]) * s, y = gy + (OFF[i][1] - SHIFT[1]) * s;
           const r = Math.max(m.min * (narrow ? .7 : 1), RAD[i] * s), p = phaseOf(m), lit = Math.round((1 - Math.cos(2 * Math.PI * p)) / 2 * 100);
           drawMoon(ctx, m, x, y, r, p, n, true);
-          const tw = narrow ? 110 : 210, lx = clamp(x, br.left + tw / 2 + 4, br.right - tw / 2 - 4), ly = y + r + 18;
+          const tw = narrow ? 110 : 210, lx = narrow ? clamp(x, br.left + tw / 2 + 4, br.right - tw / 2 - 4) : x - r - 12, ly = narrow ? y + r + 18 : y - 9;
           ctx.save();
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.textAlign = narrow ? "center" : "right"; ctx.textBaseline = "middle";
           ctx.shadowColor = "rgba(0,0,0,.9)"; ctx.shadowBlur = 6;
           ctx.font = "500 " + (narrow ? 14 : 17) + "px 'Alegreya SC', Georgia, serif"; ctx.fillStyle = rgb([238, 240, 255], .95 * n);
           ctx.fillText(m.name, lx, ly);
