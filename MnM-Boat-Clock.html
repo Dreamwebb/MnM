@@ -216,9 +216,9 @@ th, td { border-top-color: rgba(120, 95, 55, .35); }
 .fan-note { margin: 10px 0 0; font-family: var(--font-sc); font-size: 13px; letter-spacing: .08em; color: var(--muted-on-dark); }
 
 .title .outline { color: #fff6e6; -webkit-text-stroke: .032em #fff6e6; }
-.title .fill { position: relative;
+.title .fill { position: relative; padding-block: .14em; margin-block: -.14em; /* room for the gradient above/below the tall & so its top is not left uncoloured */
   background: linear-gradient(180deg, #df421b 4%, #ec7019 38%, #f3931d 68%, #f7ae2a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
-  -webkit-text-stroke: 1.2px rgba(90, 22, 4, .6); }
+  filter: drop-shadow(0 0 .6px rgba(90, 22, 4, .9)); } /* outer edge only: a text-stroke would trace the overlapping serif joins inside the letters */
 .title .amp { font-size: 1.1em; margin: 0 .03em; }
 .hero-kicker { margin: 0; font-family: var(--font-sc); color: var(--gold); font-weight: 500; letter-spacing: .16em; font-size: 14px; }
 
@@ -315,6 +315,16 @@ td { padding-block: 10px; }
 .mapbox .zsvg .mring { stroke-width: calc(2.6px * var(--zk)); }
 .mapbox .zsvg .mlabel { font-size: calc(16px * var(--zk)); stroke-width: calc(3.5px * var(--zk)); }
 .mapbox .zsvg .mapboat { transition: transform .9s linear; }
+
+/* daytime sky is pale, so keep the light header text readable */
+.panel.hero, .fan-note, .hero-kicker { text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 14px rgba(0, 0, 0, .55); }
+.hero .time, .hero .time small, .hero .pill, .hero .strip { text-shadow: none; }
+
+/* zone names for small zones alternate onto a second row inside the bottom of the band */
+.zone-name.low { top: auto; bottom: 30px; }
+.zone-name.small { font-size: 13px; }
+.zone-name.hide { display: none; } /* end zones: the port name is already shown under the line */
+@media (max-width: 700px) { .zone-name { font-size: 12px; } }
 </style>
 </head>
 <body>
@@ -414,7 +424,9 @@ td { padding-block: 10px; }
     {
       id: "surface", name: "Surface boats", ends: ["Keeper's Bight", "Night Harbor"], mirror: true,
       stations: [{name:"Keeper's Bight", pos:0}, {name:"Zaedin's Landing", pos:.4, stop:true}, {name:"Player Island", pos:.6, stop:true}, {name:"Night Harbor", pos:1}],
-      zones: [{name:"Shallow Shoals", from:.3, to:.7}],
+      // zone edges on the Night Harbor side come from timings measured in game after the 5 PM Night Harbor departure:
+      // Shaded Dunes 2:25, Fallen Pass 5:20, Shallow Shoals 9:35 real time (16%, 36% and 64% of the 5-hour run to Player Island)
+      zones: [{name:"Keeper's Bight", from:0, to:.1, hide:true}, {name:"Shallow Shoals", from:.1, to:.744}, {name:"Vale of Zintar", from:.744, to:.804, small:true}, {name:"Fallen Pass", from:.804, to:.858, low:true, small:true}, {name:"Shaded Dunes", from:.858, to:.936, small:true}, {name:"Night Harbor", from:.936, to:1, hide:true}],
       events: [
         {t:2,  kind:"arrive", place:"Keeper's Bight", pos:0, leg:"dock"},
         {t:5,  kind:"depart", place:"Keeper's Bight", pos:0, leg:"out"},
@@ -498,7 +510,7 @@ td { padding-block: 10px; }
     sec.innerHTML =
       '<h2>' + r.name + '</h2>' +
       '<div class="track-wrap"><div class="track" id="track-' + r.id + '"><div class="rail"></div>' +
-      r.zones.map(z => '<div class="zone" style="left:' + X(r, r.mirror ? z.to : z.from) * 100 + '%;width:' + (z.to - z.from) * 100 + '%"></div><div class="zone-name" style="left:' + X(r, (z.from + z.to) / 2) * 100 + '%">' + z.name + '</div>').join("") +
+      r.zones.map(z => '<div class="zone" style="left:' + X(r, r.mirror ? z.to : z.from) * 100 + '%;width:' + (z.to - z.from) * 100 + '%"></div><div class="zone-name' + (z.low ? ' low' : '') + (z.hide ? ' hide' : '') + (z.small ? ' small' : '') + '" style="left:' + X(r, (z.from + z.to) / 2) * 100 + '%">' + z.name + '</div>').join("") +
       r.stations.map(s => '<div class="station' + (s.stop ? " stop" : "") + '" style="left:' + X(r, s.pos) * 100 + '%"><i></i></div><div class="station-name' + (s.stop ? " minor" : "") + '" style="left:' + X(r, s.pos) * 100 + '%">' + s.name + '</div>').join("") +
       [1,2,3].map(b => '<div class="boat" id="boat-' + r.id + '-' + b + '" title="Boat ' + b + '"><svg class="ship" viewBox="0 0 44 34" width="54" height="42" aria-hidden="true"><g class="hullg"><path class="mast" d="M12.4 13.4 V1.8 M21.4 18.4 V0.8 M31.4 18.4 V2.6"/><path class="yard" d="M8.4 1.6 L18 15.4 M17.4 0.6 L27 15 M27.8 2.4 L36.8 15.6"/><path class="sail" d="M8.9 2.2 Q16.6 6.4 17.6 14.6 L12.6 13.6 Q12.3 7.2 8.9 2.2 Z"/><path class="sail" d="M17.9 1.2 Q25.6 5.4 26.6 14.1 L21.6 13.3 Q21.3 6.6 17.9 1.2 Z"/><path class="sail" d="M28.3 3 Q35.6 7 36.4 14.8 L31.6 14 Q31.3 8.2 28.3 3 Z"/><path class="seam" d="M11.2 5.4 L15.8 10.6 M14 9.2 L16.9 12.6 M20.2 4.4 L24.8 9.6 M23 8.2 L25.9 11.8 M30.6 6.2 L34.8 11.2 M33.1 9.7 L35.6 12.8"/><path class="hull" d="M2.6 12.8 H14.4 V18.4 H34 C37.2 18 38.9 15.4 39.8 11.2 C40.3 8.6 40.9 7.2 41.9 6.6 L42.6 8 C41.6 9 41.3 11.6 40.9 14.6 C40.2 20.2 37.6 24.6 33.2 26.6 C30.4 27.8 26.6 28.2 22 28.2 L9.6 28.2 C5.6 27.9 3.6 25.6 3.1 22.4 Z"/><path class="curl" d="M41.6 7.2 C41.4 4.6 44.2 4 44 6.4 C43.9 7.7 42.4 7.9 42.2 6.9"/><path class="rail" d="M2.8 10.6 H14 M3.3 10.6 V12.8 M6.1 10.6 V12.8 M8.8 10.6 V12.8 M11.5 10.6 V12.8 M14 10.6 V12.8"/><path class="win" d="M4.4 17 V15.2 Q5.1 14.4 5.8 15.2 V17 Z M7.2 17 V15.2 Q7.9 14.4 8.6 15.2 V17 Z M10 17 V15.2 Q10.7 14.4 11.4 15.2 V17 Z"/><path class="plank" d="M3.4 21.2 H38.6 M4.4 24.6 C12 25.4 30 25.6 36.2 23.4 M14.4 18.4 V21.2 M20 21.2 V24.9 M27 21.2 V25 M33.4 18.6 V21.2"/><path class="gunwale" d="M14.4 18.4 H34 C37.2 18 38.9 15.4 39.8 11.2"/></g><g class="badge"><circle class="bdg" cx="22" cy="23" r="7"/><text class="num" x="22" y="27" text-anchor="middle">' + b + '</text></g></svg><em></em></div>').join("") +
       '</div></div>' +
@@ -615,7 +627,13 @@ td { padding-block: 10px; }
       seg: [
         { a: 0, b: .4, pts: [SURF.kb, [615,112],[540,140],[440,175],[330,210],[220,240],[150,252], SURF.zl] },
         { a: .4, b: .6, pts: [SURF.zl, [110,300],[150,350],[205,375],[240,410], SURF.pi] },
-        { a: .6, b: 1, pts: [SURF.pi, [320,430],[395,445],[418,490],[410,535],[405,580],[410,628],[418,668],[432,710],[480,742],[545,765],[610,792],[680,815],[722,840],[738,882],[765,920],[830,936],[900,934],[960,910],[1020,884],[1075,861],[1115,848], SURF.nh] }
+        // Night Harbor -> Player Island is split where the boat enters each zone, timed in game (from the 5 PM departure:
+        // Shaded Dunes after 2:25 real time, Fallen Pass 5:20, Shallow Shoals 9:35 = 16%, 36% and 64% of the 5-hour run)
+        { a: 0.6, b: 0.744, pts: [SURF.pi,[320,430],[395,445],[418,490],[410,535],[408,550]] },
+        { a: 0.744, b: 0.804, pts: [[408,550],[405,580],[410,628],[418,668],[432,710],[480,742],[545,765],[610,792],[624,797]] },
+        { a: 0.804, b: 0.858, pts: [[624,797],[680,815],[722,840],[738,882],[765,920],[830,936],[900,934],[901,934]] },
+        { a: 0.858, b: 0.936, pts: [[901,934],[960,910],[1020,884],[1066,865]] },
+        { a: 0.936, b: 1, pts: [[1066,865],[1075,861],[1115,848],SURF.nh] }
       ]
     }),
     makeMap({
@@ -926,19 +944,20 @@ td { padding-block: 10px; }
   if (!cv || !cv.getContext) return;
   const ctx = cv.getContext("2d");
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // [game hour, top colour, horizon colour]; night is the game's indigo skybox
+    // [game hour, top, middle (60% down), horizon]. Daytime is the game's hazy lavender-grey sky that warms to orange-tan at
+  // the horizon (sampled from an in-game screenshot); night is its near-black, warm-toned skybox.
   const KEYS = [
-    [0,    "#181a36", "#2b2e56"],
-    [4.6,  "#1a1c3a", "#2f325a"],
-    [5.5,  "#2a2c55", "#6a4a5c"],
-    [6.2,  "#3d5583", "#e5824a"],
-    [7.5,  "#3f6ea6", "#e2b47a"],
-    [12,   "#2f64a3", "#c9b28a"],
-    [16.4, "#2c5689", "#d8a25c"],
-    [17.5, "#3b2c57", "#e06b36"],
-    [18.4, "#22244b", "#4e3a5e"],
-    [19.6, "#1a1c3a", "#2e3158"],
-    [24,   "#181a36", "#2b2e56"]
+    [0,    "#2e2a2f", "#2e2b2e", "#2a272b"],
+    [4.6,  "#2e2a2f", "#2f2c2f", "#2c282b"],
+    [5.5,  "#1f1b28", "#3a2d3c", "#5e4452"],
+    [6.2,  "#4a4f6e", "#9a7a7c", "#d9864f"],
+    [7.5,  "#767890", "#a29aa2", "#c39468"],
+    [12,   "#7c7e91", "#a39ba3", "#bd8f62"],
+    [16.4, "#787a8f", "#a6979b", "#c78d5a"],
+    [17.5, "#4a3a5c", "#8f5a55", "#e06b36"],
+    [18.4, "#1c1724", "#2f2530", "#47343f"],
+    [19.6, "#2e2a2f", "#2e2b2e", "#2c282b"],
+    [24,   "#2e2a2f", "#2e2b2e", "#2a272b"]
   ];
   const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
@@ -946,10 +965,10 @@ td { padding-block: 10px; }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   function skyAt(h) {
     for (let i = 0; i < KEYS.length - 1; i++) {
-      const [h0, t0, b0] = KEYS[i], [h1, t1, b1] = KEYS[i + 1];
-      if (h >= h0 && h <= h1) { const t = (h - h0) / (h1 - h0), e = t * t * (3 - 2 * t); return [mix(hex(t0), hex(t1), e), mix(hex(b0), hex(b1), e)]; }
+      const [h0, ...c0] = KEYS[i], [h1, ...c1] = KEYS[i + 1];
+      if (h >= h0 && h <= h1) { const t = (h - h0) / (h1 - h0), e = t * t * (3 - 2 * t); return c0.map((c, j) => mix(hex(c), hex(c1[j]), e)); }
     }
-    return [hex(KEYS[0][1]), hex(KEYS[0][2])];
+    return KEYS[0].slice(1).map(hex);
   }
   const nightness = h => h < 5.2 || h >= 19.4 ? 1 : h < 6.6 ? 1 - (h - 5.2) / 1.4 : h < 17.8 ? 0 : (h - 17.8) / 1.6;
   const gameHour = () => ((Date.now() % 86400000) / 180000) % 24;
@@ -957,7 +976,10 @@ td { padding-block: 10px; }
   // ---- Moons ----
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
   // Phases measured (lit area / disk) from nine in-game screenshots on 24 Oct 2026 (AEDT), 10:53 AM - 6:09 PM.
-  // Ice: ~34% (11:03) -> ~8% (2:25 PM) -> not visible (3:42 PM and 6:09 PM, at new moon) => ~26 game days per cycle.
+  // Ice: 10:53-11:10 AM it was ~34% lit on the same side as the Great moon's lit side. In every shot since 2:25 PM
+  //   (2:25, 7:11 and 7:21 PM real time; 8:20 PM, 7:40 PM and 11 PM game time) it has been an 8-10% crescent lit on the
+  //   opposite side, with no measurable change over ~4 game days. So it passed through new before 2:25 PM and is now waxing
+  //   very slowly; 2000 game days is an estimate. (The 3:42 and 6:09 PM shots were framed so it was out of view.)
   // A crescent under ~5% lit is too thin to see in game, so the page fades it out.
   // Great: 34.5-35.5% lit and waning in every shot over ~6 game days => extremely slow; 2000 game days is an estimate.
   // Gold: fully lit in every shot => full, slow; 360 game days is an estimate.
@@ -966,14 +988,14 @@ td { padding-block: 10px; }
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .905, cycle: 26,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 2.36,
-      lit: [222, 252, 255], edge: [130, 220, 236], dark: [24, 34, 70], darkA: .7, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
+    { name: "Ice moon",   phase0: .09, cycle: 2000,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: -.7,
+      lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
     { name: "Great moon", phase0: .7985, cycle: 2000, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
-      lit: [242, 246, 252], edge: [184, 198, 222], dark: [26, 32, 70], darkA: .85, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
+      lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
     { name: "Gold moon",  phase0: .5, cycle: 360, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
-  const phaseOf = m => { const gd = (Date.now() - MOON_EPOCH) / 4320000; return (((m.phase0 + gd / m.cycle) % 1) + 1) % 1; };
+  const phaseOf = m => { if (m.at) { const a = m.at(gameHour()); m.tilt = a.tilt; return a.p; } const gd = (Date.now() - MOON_EPOCH) / 4320000; return (((m.phase0 + gd / m.cycle) % 1) + 1) % 1; };
   const litOf = p => (1 - Math.cos(2 * Math.PI * p)) / 2;
   const seenOf = p => clamp((litOf(p) - .025) / .045, 0, 1); // 0 near new (too thin to see), 1 from ~7% lit
   function drawMoon(c, m, x, y, r, p, vis, halo) {
@@ -1001,40 +1023,39 @@ td { padding-block: 10px; }
     : p < .53 ? "Full" : p < .72 ? "Waning gibbous" : p < .78 ? "Last quarter" : "Waning crescent";
 
   // ---- Static layers built on resize: stars, Milky Way, cloud bank ----
-  let W = 0, H = 0, dpr = 1, starsL, milkyL, cloudL, twinklers = [];
+  let W = 0, H = 0, dpr = 1, starsL, milkyL, cloudSheets = [], cloudTile = 1, cloudLast = null, twinklers = [];
+  const cloudPos = [[0, 0], [370, 210]];
   const layer = (w, h) => { const c = document.createElement("canvas"); c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); const g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); return [c, g]; };
   function build() {
     let s = 9; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
     const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
-    const tints = [[255, 255, 255], [255, 238, 205], [255, 216, 172], [206, 222, 255], [235, 240, 255]];
+    const tints = [[255, 255, 255], [255, 246, 232], [255, 226, 190], [255, 200, 150], [206, 222, 255], [222, 232, 255]];
     // value noise (optionally periodic in x) + fractal sum
-    const makeNoise = (seed, px) => {
+    const makeNoise = (seed, px, py) => {
       let t = seed; const r = () => (t = (t * 16807) % 2147483647) / 2147483647;
       const N = 512, tab = new Float32Array(N * N); for (let i = 0; i < tab.length; i++) tab[i] = r();
-      return (x, y) => {
+      return (x, y, qx = px, qy = py) => { // qx/qy: repeat period in lattice cells (fbm scales it per octave)
         let xi = Math.floor(x), yi = Math.floor(y); const xf = x - xi, yf = y - yi;
-        const wrap = v => px ? ((v % px) + px) % px : ((v % N) + N) % N;
-        const x0 = wrap(xi) % N, x1 = wrap(xi + 1) % N, y0 = ((yi % N) + N) % N, y1 = (y0 + 1) % N;
+        const wx = v => qx ? ((v % qx) + qx) % qx % N : ((v % N) + N) % N, wy = v => qy ? ((v % qy) + qy) % qy % N : ((v % N) + N) % N;
+        const x0 = wx(xi), x1 = wx(xi + 1), y0 = wy(yi), y1 = wy(yi + 1);
         const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
         const a = tab[y0 * N + x0], b = tab[y0 * N + x1], c = tab[y1 * N + x0], d = tab[y1 * N + x1];
         return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
       };
     };
-    const fbm = (nz, x, y, oct, px) => { let sum = 0, amp = .5, f = 1, norm = 0; for (let o = 0; o < oct; o++) { sum += amp * nz(x * f, y * f); norm += amp; amp *= .5; f *= 2; } return sum / norm; };
+    const fbm = (nz, x, y, oct, px, py) => { let sum = 0, amp = .5, f = 1, norm = 0; for (let o = 0; o < oct; o++) { sum += amp * (px ? nz(x * f, y * f, px * f, py * f) : nz(x * f, y * f)); norm += amp; amp *= .5; f *= 2; } return sum / norm; };
     const sstep = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
-    // ---- stars: very dense fine field like the game's skybox ----
+    // ---- stars: sharp pinpoints, density and brightness spread measured from the in-game recording ----
     let g; [starsL, g] = layer(W, H);
-    const nTiny = Math.round(W * H / 420), nMed = Math.round(W * H / 5200);
-    for (let i = 0; i < nTiny; i++) {
-      g.fillStyle = rgb(tints[(rnd() * tints.length) | 0], .18 + rnd() * .5);
-      const x = rnd() * W, y = rnd() * H, r = .28 + rnd() * .38; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
-    }
-    for (let i = 0; i < nMed; i++) {
-      g.fillStyle = rgb(tints[(rnd() * tints.length) | 0], .55 + rnd() * .4);
-      g.beginPath(); g.arc(rnd() * W, rnd() * H, .7 + rnd() * .6, 0, 6.283); g.fill();
-    }
-    twinklers = Array.from({ length: Math.round(W * H / 16000) }, () => ({ x: rnd() * W, y: rnd() * H * .85, r: .9 + rnd() * 1, p: rnd() * 6.28, sp: .4 + rnd() * 1.4, t: tints[(rnd() * tints.length) | 0] }));
+    const star = (x, y, r, a, t) => { g.fillStyle = rgb(t, a); g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill(); };
+    const tint = () => { const q = rnd(); return q < .14 ? [196, 214, 255] : q < .27 ? [218, 230, 255] : q < .5 ? [255, 255, 255] : q < .72 ? [255, 244, 228] : q < .87 ? [255, 222, 182] : [255, 196, 140]; }; // blue-white to orange, as in the game
+    const AREA = W * H;
+    for (let i = 0; i < AREA / 320; i++) star(rnd() * W, rnd() * H, .42 + rnd() * .12, .2 + rnd() * .22, tint());   // faint
+    for (let i = 0; i < AREA / 1000; i++) star(rnd() * W, rnd() * H, .55 + rnd() * .15, .5 + rnd() * .3, tint());   // medium
+    for (let i = 0; i < AREA / 2600; i++) star(rnd() * W, rnd() * H, .75 + rnd() * .2, .82 + rnd() * .18, tint()); // bright
+    for (let i = 0; i < AREA / 4800; i++) { const x = rnd() * W, y = rnd() * H, r = 1 + rnd() * .35, t = tint(); star(x, y, r * 2.4, .07, t); star(x, y, r, 1, t); } // brightest, with a soft halo
+    twinklers = Array.from({ length: Math.round(AREA / 30000) }, () => ({ x: rnd() * W, y: rnd() * H * .85, r: .8 + rnd() * .5, p: rnd() * 6.28, sp: .4 + rnd() * 1.4, t: tint() }));
 
     // ---- Milky Way + faint nebulosity, rendered from noise at reduced size then smoothed up ----
     const S = 1 / 3, w = Math.ceil(W * S), h = Math.ceil(H * S);
@@ -1042,8 +1063,8 @@ td { padding-block: 10px; }
     const img = new ImageData(w, h), D = img.data;
     for (let v = 0; v < h; v++) {
       const Y = v / S, yn = Y / H;
-      const cx = W * (.6 - .05 * yn) + (fbm(nz2, Y * .0016, 3.1, 3) - .5) * W * .16;
-      const bw = Math.max(70, W * .075) * (1.25 - .45 * yn) * (.75 + .6 * fbm(nz3, Y * .0025, 7.7, 3));
+      const cx = W * .52 + (H * .42 - Y) * .82 + (fbm(nz2, Y * .0016, 3.1, 3) - .5) * W * .1;
+      const bw = Math.max(90, W * .11) * (1.15 - .3 * yn) * (.75 + .6 * fbm(nz3, Y * .0025, 7.7, 3));
       for (let u = 0; u < w; u++) {
         const X = u / S, i = (v * w + u) * 4;
         const d = (X - cx) / bw, band = Math.exp(-d * d * 1.25);
@@ -1054,13 +1075,13 @@ td { padding-block: 10px; }
         const glow = band * (.35 + .9 * clump);
         // dust lanes: ridged noise, stretched along the band
         const rdg = 1 - Math.abs(2 * fbm(nz3, X * .011, Y * .0042, 5) - 1);
-        const dust = Math.pow(band, 1.6) * sstep(.62, .92, rdg) * .85 + Math.pow(band, 2.5) * sstep(.5, .8, fbm(nz2, X * .02, Y * .009, 4)) * .35;
+        const dust = Math.pow(band, 1.3) * sstep(.58, .9, rdg) * 1.05 + Math.pow(band, 2) * sstep(.48, .78, fbm(nz2, X * .02, Y * .009, 4)) * .45;
         // compose: nebulosity + glow (mauve) then dust (dark violet) on top
-        const ga = glow * .62, a1 = Math.min(.7, ga + neb), wn = neb / (ga + neb + 1e-6);
-        const r = 168 * (1 - wn) + 92 * wn, gg = 148 * (1 - wn) + 96 * wn, b = 154 * (1 - wn) + 138 * wn;
-        const a2 = Math.min(.55, dust * .48);
+        const ga = glow * 1.25, a1 = Math.min(.86, ga + neb), wn = neb / (ga + neb + 1e-6);
+        const r = 168 * (1 - wn) + 96 * wn, gg = 144 * (1 - wn) + 86 * wn, b = 134 * (1 - wn) + 86 * wn; // rosy brown glow, mauve-grey haze
+        const a2 = Math.min(.72, dust * .62);
         const A = a2 + a1 * (1 - a2);
-        const R = A ? (18 * a2 + r * a1 * (1 - a2)) / A : 0, G = A ? (14 * a2 + gg * a1 * (1 - a2)) / A : 0, B = A ? (30 * a2 + b * a1 * (1 - a2)) / A : 0;
+        const R = A ? (46 * a2 + r * a1 * (1 - a2)) / A : 0, G = A ? (37 * a2 + gg * a1 * (1 - a2)) / A : 0, B = A ? (33 * a2 + b * a1 * (1 - a2)) / A : 0; // brown dust lanes
         D[i] = R; D[i + 1] = G; D[i + 2] = B; D[i + 3] = A * 255;
       }
     }
@@ -1068,35 +1089,41 @@ td { padding-block: 10px; }
     [milkyL, g] = layer(W, H);
     g.imageSmoothingQuality = "high"; g.drawImage(lo, 0, 0, W, H);
     // dense fine stars concentrated in the band
-    for (let i = 0; i < Math.round(H * 3.2); i++) {
-      const y = rnd() * H, yn = y / H, cx = W * (.6 - .05 * yn) + (fbm(nz2, y * .0016, 3.1, 3) - .5) * W * .16;
-      const bw = Math.max(70, W * .075) * (1.25 - .45 * yn);
+    for (let i = 0; i < Math.round(H * 7); i++) {
+      const y = rnd() * H, yn = y / H, cx = W * .52 + (H * .42 - y) * .82 + (fbm(nz2, y * .0016, 3.1, 3) - .5) * W * .1;
+      const bw = Math.max(90, W * .11) * (1.15 - .3 * yn);
       g.fillStyle = rgb(tints[(rnd() * tints.length) | 0], .2 + rnd() * .55);
       g.beginPath(); g.arc(cx + gauss() * bw * 1.1, y, .3 + rnd() * .5, 0, 6.283); g.fill();
     }
 
-    // ---- cloud bank: noise clouds, lighter tops and darker bases, periodic so it can drift ----
-    const cw = Math.ceil(W * S), ch = h, per = 4;           // per = noise cells across one screen width
-    const cn1 = makeNoise(505, per), cn2 = makeNoise(606, per * 2);
-    const cimg = new ImageData(cw * 2, ch), C = cimg.data;
-    const dens = (X, Y) => {
-      const yn = Y / H, fx = X / W * per;
-      const base = fbm(cn1, fx, yn * per * 1.9, 5);
-      const fine = fbm(cn2, fx * 2, yn * per * 3.6, 4);
-      const nzv = base * .72 + fine * .36, thr = .8 - .3 * sstep(.58, 1, yn);
-      return sstep(-.03, .2, nzv - thr);
+    // ---- clouds: two soft, semi-transparent cloud sheets that tile in both directions, so they can drift any way.
+    // Each sheet has a blue-grey night version and a white day version. Density is domain-warped noise for wispy edges.
+    const CS = .36, T = W, tw = Math.ceil(T * CS), per = 2; // tile = one screen width square; per must be a whole number
+    const mkCloud = (seedA, seedB, cover) => {
+      const n1 = makeNoise(seedA), n2 = makeNoise(seedB);
+      const dens = new Float32Array(tw * tw), det = new Float32Array(tw * tw);
+      for (let v = 0; v < tw; v++) for (let u = 0; u < tw; u++) {
+        const fx = u / tw * per, fy = v / tw * per;
+        const P2 = per * 2, qx = fbm(n2, fx * 2 + 5.2, fy * 2 + 1.3, 2, P2, P2), qy = fbm(n2, fx * 2 + 9.7, fy * 2 + 4.4, 2, P2, P2);
+        const val = fbm(n1, fx + (qx - .5) * .9, fy + (qy - .5) * .9, 5, per, per);
+        const i = v * tw + u;
+        dens[i] = sstep(0, .2, (val - .5) * 1.8 + .5 - cover); // stretch the fbm range into clear gaps and soft billows
+        det[i] = fbm(n2, fx * 4, fy * 4, 3, per * 4, per * 4);
+      }
+      const night = new ImageData(tw, tw), day = new ImageData(tw, tw), Nn = night.data, Dd = day.data;
+      for (let v = 0; v < tw; v++) for (let u = 0; u < tw; u++) {
+        const i = v * tw + u, d0 = dens[i]; if (d0 <= 0) continue;
+        const below = dens[((v + 5) % tw) * tw + (u + 2) % tw];
+        const lt = Math.max(0, Math.min(1, .55 + (d0 - below) * 1.8 + (det[i] - .5) * .9 - d0 * .25)); // lit tops, softer cores
+        const a = Math.pow(d0, 1.35) * (.55 + .45 * det[i]), j = i * 4;
+        Nn[j] = 52 + 46 * lt; Nn[j + 1] = 55 + 48 * lt; Nn[j + 2] = 66 + 52 * lt; Nn[j + 3] = a * 168;
+        Dd[j] = 205 + 50 * lt; Dd[j + 1] = 208 + 47 * lt; Dd[j + 2] = 216 + 39 * lt; Dd[j + 3] = a * 150;
+      }
+      const toCanvas = id => { const c = document.createElement("canvas"); c.width = tw; c.height = tw; c.getContext("2d").putImageData(id, 0, 0); return c; };
+      return [toCanvas(night), toCanvas(day)];
     };
-    for (let v = 0; v < ch; v++) for (let u = 0; u < cw * 2; u++) {
-      const X = (u % cw) / cw * W, Y = v / S, i = (v * cw * 2 + u) * 4;
-      const d0 = dens(X, Y);
-      if (d0 <= 0) { C[i + 3] = 0; continue; }
-      const tex = fbm(cn2, X / W * per * 3, Y / H * per * 5, 3);
-      const lightness = Math.max(0, Math.min(1, .34 + (d0 - dens(X, Y + 22)) * 1.9 + (tex - .5) * .9 - (Y / H - .8) * .9));
-      C[i] = 44 + 88 * lightness; C[i + 1] = 47 + 92 * lightness; C[i + 2] = 80 + 100 * lightness; C[i + 3] = Math.min(1, d0) * 210;
-    }
-    const clo = document.createElement("canvas"); clo.width = cw * 2; clo.height = ch; clo.getContext("2d").putImageData(cimg, 0, 0);
-    [cloudL, g] = layer(W * 2, H);
-    g.imageSmoothingQuality = "high"; g.drawImage(clo, 0, 0, W * 2, H);
+    cloudTile = T;
+    cloudSheets = [mkCloud(505, 606, .4), mkCloud(707, 808, .44)];
   }
   function resize() {
     dpr = Math.min(1.5, window.devicePixelRatio || 1);
@@ -1107,9 +1134,9 @@ td { padding-block: 10px; }
   }
 
   function draw(now) {
-    const gh = gameHour(), [top, hor] = skyAt(gh), n = nightness(gh);
+    const gh = gameHour(), [top, mid, hor] = skyAt(gh), n = nightness(gh);
     const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, rgb(top)); g.addColorStop(.7, rgb(mix(top, hor, .65))); g.addColorStop(1, rgb(hor));
+    g.addColorStop(0, rgb(top)); g.addColorStop(.6, rgb(mid)); g.addColorStop(.82, rgb(mix(mid, hor, .5))); g.addColorStop(1, rgb(hor));
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     if (n > .02) {
       ctx.globalAlpha = n; ctx.drawImage(milkyL, 0, 0, W, H); ctx.drawImage(starsL, 0, 0, W, H); ctx.globalAlpha = 1;
@@ -1119,15 +1146,35 @@ td { padding-block: 10px; }
         ctx.fillStyle = rgb(st.t, a); ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 6.283); ctx.fill();
       }
     }
+    // clouds (behind the sun and moons so the moons and their labels stay readable): two sheets drifting at different
+    // speeds, each on a slowly wandering diagonal heading, so the masses churn and change direction like the game's clouds
+    const tc = now / 1000, dt = cloudLast == null ? 0 : Math.min(.5, tc - cloudLast); cloudLast = tc;
+    ctx.imageSmoothingQuality = "high";
+    cloudSheets.forEach(([night, day], k) => {
+      const ang = (k ? -.6 : .5) + .75 * Math.sin(tc / (k ? 140 : 95) + k * 2.1), sp = k ? 4.2 : 2.6;
+      if (!reduce) { cloudPos[k][0] += Math.cos(ang) * sp * dt; cloudPos[k][1] += Math.sin(ang) * sp * dt; }
+      const Tt = cloudTile, ox = Math.round(((cloudPos[k][0] % Tt) + Tt) % Tt), oy = Math.round(((cloudPos[k][1] % Tt) + Tt) % Tt);
+      const an = (k ? .85 : 1) * n, ad = (k ? .3 : .38) * (1 - n);
+      for (let x = ox - Tt; x < W; x += Tt) for (let y = oy - Tt; y < H; y += Tt) {
+        if (an > .01) { ctx.globalAlpha = an; ctx.drawImage(night, x, y, Tt, Tt); }
+        if (ad > .01) { ctx.globalAlpha = ad; ctx.drawImage(day, x, y, Tt, Tt); }
+      }
+    });
+    ctx.globalAlpha = 1;
     // sun
     if (gh > 5.6 && gh < 18.4) {
       const f = clamp((gh - 6) / 12, -.03, 1.03), x = W * (.08 + .84 * f), y = H * (.78 - .62 * Math.sin(Math.PI * f));
-      const warm = 1 - Math.sin(Math.PI * clamp(f, 0, 1)) * .6, R = Math.max(W, H) * .32;
-      const glow = ctx.createRadialGradient(x, y, 0, x, y, R);
-      glow.addColorStop(0, "rgba(255," + Math.round(214 - 60 * warm) + "," + Math.round(140 - 80 * warm) + ",.55)");
-      glow.addColorStop(.25, "rgba(255,170,80,.16)"); glow.addColorStop(1, "rgba(255,150,60,0)");
-      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "rgba(255,240,205,.95)"; ctx.beginPath(); ctx.arc(x, y, Math.max(14, W * .018), 0, 6.283); ctx.fill();
+      // big white sun in a wide soft haze, like the game (glow fall-off measured from a screenshot); warmer near the horizon
+      const warm = 1 - Math.sin(Math.PI * clamp(f, 0, 1)), up = clamp(Math.sin(Math.PI * f) * 1.6, 0, 1);
+      const rs = Math.max(26, Math.min(W, H * 1.8) * .045), R = Math.max(W, H) * .45;
+      const sc = [255, Math.round(252 - 50 * warm), Math.round(247 - 110 * warm)];
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, R), s0 = rs / R;
+      [[0, .85], [s0, .8], [s0 + .08, .62], [s0 + .19, .46], [s0 + .3, .3], [s0 + .53, .1], [1, 0]].forEach(([o, a]) => glow.addColorStop(Math.min(1, o), rgb(sc, a * (.35 + .65 * up))));
+      ctx.globalCompositeOperation = "screen"; ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = "source-over";
+      const disk = ctx.createRadialGradient(x, y, rs * .9, x, y, rs * 1.08);
+      disk.addColorStop(0, rgb([255, 255, Math.round(254 - 60 * warm)], 1)); disk.addColorStop(1, rgb([255, 255, 255], 0));
+      ctx.fillStyle = disk; ctx.beginPath(); ctx.arc(x, y, rs * 1.12, 0, 6.283); ctx.fill();
     }
     // moons: drawn in the clear strip of sky below the title (#moonband), which scrolls with the page
     const band = document.getElementById("moonband"), br = band ? band.getBoundingClientRect() : null;
@@ -1164,14 +1211,10 @@ td { padding-block: 10px; }
         });
       }
     }
-    // cloud bank (blue-grey at night, warm white by day)
-    const drift = reduce ? 0 : ((now / 1000) * 4) % W;
-    ctx.globalAlpha = .9 * n + .45 * (1 - n);
-    ctx.drawImage(cloudL, drift, 0, W, H, 0, 0, W, H);
-    ctx.globalAlpha = 1;
+
     // keep the title area readable
     const shade = ctx.createLinearGradient(0, 0, 0, H);
-    shade.addColorStop(0, "rgba(0,0,0,.45)"); shade.addColorStop(.32, "rgba(0,0,0,.12)"); shade.addColorStop(1, "rgba(0,0,0,.25)");
+    const sh = .12 + .88 * n; shade.addColorStop(0, "rgba(0,0,0," + (.45 * sh) + ")"); shade.addColorStop(.32, "rgba(0,0,0," + (.12 * sh) + ")"); shade.addColorStop(1, "rgba(0,0,0," + (.25 * sh) + ")");
     ctx.fillStyle = shade; ctx.fillRect(0, 0, W, H);
   }
   let last = 0;
