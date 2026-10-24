@@ -956,10 +956,10 @@ td { padding-block: 10px; }
 
   // ---- Moons ----
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
-  // Phases measured (lit area / disk) from eight in-game screenshots on 24 Oct 2026 (AEDT), 10:53 AM - 3:42 PM.
-  // Ice: ~34% (11:03) -> ~8% (2:25 PM) -> not visible (3:42 PM), waning into new => ~26 game days per cycle.
+  // Phases measured (lit area / disk) from nine in-game screenshots on 24 Oct 2026 (AEDT), 10:53 AM - 6:09 PM.
+  // Ice: ~34% (11:03) -> ~8% (2:25 PM) -> not visible (3:42 PM and 6:09 PM, at new moon) => ~26 game days per cycle.
   // A crescent under ~5% lit is too thin to see in game, so the page fades it out.
-  // Great: ~35% lit and waning in every shot over ~4 game days => very slow; 960 game days is an estimate.
+  // Great: 34.5-35.5% lit and waning in every shot over ~6 game days => extremely slow; 2000 game days is an estimate.
   // Gold: fully lit in every shot => full, slow; 360 game days is an estimate.
   const MOON_EPOCH = Date.UTC(2026, 9, 24, 3, 24, 40); // 2:24 PM AEDT, 24 Oct 2026
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
@@ -968,7 +968,7 @@ td { padding-block: 10px; }
   const MOONS = [
     { name: "Ice moon",   phase0: .905, cycle: 26,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 2.36,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [24, 34, 70], darkA: .7, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .7985, cycle: 960, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
+    { name: "Great moon", phase0: .7985, cycle: 2000, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [26, 32, 70], darkA: .85, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
     { name: "Gold moon",  phase0: .5, cycle: 360, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
