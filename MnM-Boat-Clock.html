@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Monsters &amp; Memories Boat Tracker</title>
+<title>Dream's M&amp;M Boat Tracker</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -213,6 +213,7 @@ th, td { border-top-color: rgba(120, 95, 55, .35); }
 .title .line { display: grid; padding-bottom: .05em; }
 .title .line > span { grid-area: 1 / 1; }
 .title .line.top { font-size: .62em; }
+.title .line.pre { font-size: .4em; padding-bottom: .12em; }
 .fan-note { margin: 10px 0 0; font-family: var(--font-sc); font-size: 13px; letter-spacing: .08em; color: var(--muted-on-dark); }
 
 .title .outline { color: #fff6e6; -webkit-text-stroke: .032em #fff6e6; }
@@ -333,7 +334,7 @@ td { padding-block: 10px; }
 <div id="belltoast" class="toast" role="status" hidden></div>
 <div class="wrap">
   <header class="masthead">
-    <h1 class="title"><span class="line top"><span class="outline" aria-hidden="true">Monsters <span class="amp">&amp;</span> Memories</span><span class="fill">Monsters <span class="amp">&amp;</span> Memories</span></span><span class="line"><span class="outline" aria-hidden="true">Boat Tracker</span><span class="fill">Boat Tracker</span></span></h1>
+    <h1 class="title"><span class="line pre"><span class="outline" aria-hidden="true">Dream&rsquo;s</span><span class="fill">Dream&rsquo;s</span></span><span class="line top"><span class="outline" aria-hidden="true">Monsters <span class="amp">&amp;</span> Memories</span><span class="fill">Monsters <span class="amp">&amp;</span> Memories</span></span><span class="line"><span class="outline" aria-hidden="true">Boat Tracker</span><span class="fill">Boat Tracker</span></span></h1>
     <p class="fan-note">Fan-made tracker · not affiliated with the Monsters &amp; Memories team</p>
   </header>
   <div class="moonband" id="moonband" role="img" aria-label="The three moons in the night sky, with their current phases"></div>
@@ -977,20 +978,21 @@ td { padding-block: 10px; }
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
   // Phases measured (lit area / disk) from nine in-game screenshots on 24 Oct 2026 (AEDT), 10:53 AM - 6:09 PM.
   // Ice: 10:53-11:10 AM it was ~34% lit on the same side as the Great moon's lit side. In every shot since 2:25 PM
-  //   (2:25, 7:11 and 7:21 PM real time; 8:20 PM, 7:40 PM and 11 PM game time) it has been an 8-10% crescent lit on the
-  //   opposite side, with no measurable change over ~4 game days. So it passed through new before 2:25 PM and is now waxing
+  //   (2:25, 7:11, 7:21, 10:55 and 11:59 PM real time) it has been an 8-11% crescent lit on the opposite side (average ~10%),
+  //   with no measurable change over ~8 game days. So it passed through new before 2:25 PM and is now waxing
   //   very slowly; 2000 game days is an estimate. (The 3:42 and 6:09 PM shots were framed so it was out of view.)
   // A crescent under ~5% lit is too thin to see in game, so the page fades it out.
-  // Great: 34.5-35.5% lit and waning in every shot over ~6 game days => extremely slow; 2000 game days is an estimate.
+  // Great: 33-37% lit (average ~35%) and waning in every shot from 10:53 AM to 11:59 PM (~11 game days) => extremely slow;
+  //   2000 game days is an estimate.
   // Gold: fully lit in every shot => full, slow; 360 game days is an estimate.
   const MOON_EPOCH = Date.UTC(2026, 9, 24, 3, 24, 40); // 2:24 PM AEDT, 24 Oct 2026
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .09, cycle: 2000,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: -.7,
+    { name: "Ice moon",   phase0: .098, cycle: 2000,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: -.7,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .7985, cycle: 2000, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
+    { name: "Great moon", phase0: .796, cycle: 2000, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
     { name: "Gold moon",  phase0: .5, cycle: 360, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
