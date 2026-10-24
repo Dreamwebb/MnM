@@ -661,19 +661,19 @@ td { padding-block: 10px; }
 
   // ---- Moons ----
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
-  // Phases measured from four in-game screenshots, 10:53-11:08 AM AEDT, 24 Oct 2026 (averaged):
-  // Ice ~28% lit, Great ~31% lit, Gold ~95% lit. None changed measurably over ~5 game hours,
-  // so all three cycles are slow; 12, 30 and 14 game days are placeholders until screenshots hours apart.
-  const MOON_EPOCH = Date.UTC(2026, 9, 24, 0, 0, 0); // 11:00 AM AEDT, 24 Oct 2026
+  // Phases measured from in-game screenshots: 10:53-11:08 AM and 12:27 PM AEDT, 24 Oct 2026 (~1.3 game days apart).
+  // Great moon stayed ~31% lit (waning crescent) and Gold went ~95% -> ~93% (just past full), so both cycle very slowly:
+  // at least ~90 game days. 120 / 90 game days are estimates. Ice moon: ~28% lit (waning) at 11:00, invisible (new) at 12:27 where it should sit, so ~7 game days per cycle.
+  const MOON_EPOCH = Date.UTC(2026, 9, 24, 1, 27, 30); // 12:27 PM AEDT, 24 Oct 2026
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .177, cycle: 12,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: .6,
+    { name: "Ice moon",   phase0: .995, cycle: 7,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: .6,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [24, 34, 70], darkA: .7, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .805, cycle: 30, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: .18,
+    { name: "Great moon", phase0: .812, cycle: 120, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: .18,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [26, 32, 70], darkA: .85, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .43, cycle: 14, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
+    { name: "Gold moon",  phase0: .585, cycle: 90, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { const gd = (Date.now() - MOON_EPOCH) / 4320000; return (((m.phase0 + gd / m.cycle) % 1) + 1) % 1; };
