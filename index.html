@@ -336,33 +336,6 @@ td { padding-block: 10px; }
 .mlist button:hover, .mlist button:focus-visible { color: var(--accent); text-decoration: underline; }
 .mlist li.on button { color: var(--accent); font-weight: 700; }
 
-/* ---- Soundtrack mini player (fixed, bottom right) ---- */
-.mini { position: fixed; right: 14px; bottom: 14px; z-index: 50; width: min(340px, calc(100vw - 28px)); color: #efe6d2;
-  background: rgba(22, 16, 10, .72); border: 1px solid rgba(140, 122, 82, .55); border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, .45);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: .55; transition: opacity .25s; overflow: hidden; font-size: 14px; }
-.mini:hover, .mini:focus-within, .mini.open, .mini.waiting { opacity: 1; }
-.mini.waiting .mtitle small { color: var(--gold); opacity: 1; }
-.mini .mrow { display: flex; align-items: center; gap: 4px; padding: 6px 8px 7px; }
-.mini button { all: unset; box-sizing: border-box; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; cursor: pointer; font-size: 13px; color: #efe6d2; flex: none; }
-.mini button:hover { background: rgba(255, 255, 255, .1); }
-.mini button:focus-visible { outline: 2px solid var(--gold); }
-.mini button.big { width: 32px; height: 32px; background: rgba(254, 224, 60, .16); color: var(--gold); }
-.mini button[aria-pressed="true"], .mini button[aria-expanded="true"] { color: var(--gold); }
-.mini .mtitle { flex: 1; min-width: 0; display: grid; line-height: 1.15; padding: 0 4px; }
-.mini .mtitle span { font-family: var(--font-sc); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini .mtitle small { font-size: 11px; opacity: .7; font-variant-numeric: tabular-nums; }
-.mini .mseek { display: block; width: 100%; height: 3px; margin: 0; appearance: none; -webkit-appearance: none; background: rgba(255, 255, 255, .15); cursor: pointer; }
-.mini .mseek::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); }
-.mini .mseek::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--gold); }
-.mini .mpop { border-top: 1px solid rgba(140, 122, 82, .35); padding: 8px 10px 10px; max-height: min(50vh, 380px); overflow: auto; }
-.mini .mvol { display: flex; align-items: center; gap: 8px; font-size: 12px; opacity: .85; margin-bottom: 6px; }
-.mini .mvol input { flex: 1; accent-color: var(--gold); }
-.mini .mlist { margin: 0; padding-left: 26px; font-size: 13px; }
-.mini .mlist li { padding: 2px 0; }
-.mini .mlist button { all: unset; cursor: pointer; }
-.mini .mlist button:hover, .mini .mlist button:focus-visible { color: var(--gold); }
-.mini .mlist li.on button { color: var(--gold); font-weight: 700; }
-.mini .mdur { font-size: 11px; opacity: .6; }
 
 /* ---- Buff timer overlay (floating, draggable) ---- */
 .buffs { position: fixed; left: 14px; top: 90px; z-index: 60; width: min(290px, calc(100vw - 28px)); color: #efe6d2; font-size: 14px;
@@ -1417,105 +1390,6 @@ td { padding-block: 10px; }
       <p class="bnote">Durations from monstersandmemories.wiki and the M&amp;M wiki (longest rank). Timers keep running if you reload.</p>
     </div>
   </aside>
-  <aside class="mini" id="music" aria-label="Soundtrack player">
-    <input type="range" class="mseek" id="mSeek" min="0" max="1000" value="0" aria-label="Position in track">
-    <div class="mrow">
-      <button type="button" id="mPrev" aria-label="Previous track" title="Previous">&#9198;</button>
-      <button type="button" id="mPlay" class="big" aria-label="Play" title="Play / pause">&#9654;</button>
-      <button type="button" id="mNext" aria-label="Next track" title="Next">&#9197;</button>
-      <div class="mtitle"><span id="mTitle">Soundtrack</span><small id="mStatus"></small></div>
-      <button type="button" id="mShuf" aria-pressed="false" aria-label="Shuffle" title="Shuffle">&#8644;</button>
-      <button type="button" id="mListB" aria-expanded="false" aria-controls="mPop" aria-label="Track list" title="Track list">&#9776;</button>
-    </div>
-    <div class="mpop" id="mPop" hidden>
-      <label class="mvol">Volume <input type="range" id="mVol" min="0" max="100" value="45" aria-label="Music volume"></label>
-      <ol class="mlist" id="mList"></ol>
-    </div>
-  </aside>
-<script>
-/* ---- Soundtrack player: the game's own music, decoded from the game files ----
-   The published page plays copies stored with the page; the downloaded copy plays the same files from a "music" folder
-   next to it. It is a small player in the bottom-right corner that starts on its own. */
-  try { localStorage.removeItem("mnmMusicOff"); } catch (e) {}
-(function () {
-  const TRACKS = [["Shadows of Aêthoril", "/_blob/f1b5a14bc5e6781932386c215601b859", "music/779092158.webm", 598], ["Vale of Zintar", "/_blob/7502233e4c9737b9cd2038986fdb564c", "music/935148186.webm", 463], ["Tales of Treasury", "/_blob/cfc37f6e9e8c99e3614a368a97b2860a", "music/313288502.webm", 302], ["Faelindral", "/_blob/f62f63edf8f2af77a14941dfb1f65116", "music/194041246.webm", 409], ["Sungreet Strand", "/_blob/d2b6eea2df027a4fb291e308031c3215", "music/1011108985.webm", 443], ["Echoes of the Deep", "/_blob/457f39699fb79304deadd5f8684ba785", "music/1031082682.webm", 1251], ["Glass Flats", "/_blob/838b31f6d8716c7e7af130deaad178fc", "music/9355024.webm", 378], ["Seraphina", "/_blob/fb18d787768c2a236a7e6e89ab24a976", "music/750449908.webm", 280], ["Secret of the Ashira Tribes", "/_blob/0c673fbe4877f8378972ac5081ae50be", "music/507631685.webm", 439], ["Wyrmsbane Tunnel", "/_blob/ea9ee2cdc7d673af20b4c7e139b5fa64", "music/496502784.webm", 357], ["Wyrmsbane", "/_blob/c8b728fa9948d810b7787cec78d35f29", "music/36006786.webm", 295], ["Merchant", "/_blob/97ae18ed1e7adca4f67485c985e79569", "music/419486468.webm", 62], ["Ancient Crypt", "/_blob/577785326f59d36c2b06f90f4f76c0bb", "music/782879407.webm", 434], ["Shaded Dunes", "/_blob/4f6fe81a21c1ac4e0b74d75165b9fffa", "music/1068122028.webm", 168], ["Title Screen", "/_blob/d05c3d8ae15d06c76b013b7dd4201d52", "music/255620123.webm", 150], ["Trainer", "/_blob/abac1118a2cb29c6d74d6cbe84093bfa", "music/599891517.webm", 58], ["Night Harbor", "/_blob/a068d039c69555a2335f9b0781204ebf", "music/113620076.webm", 222], ["Night Harbor Shoreline", "/_blob/4012cd0bfa8e72096c1b004e61b69963", "music/905425716.webm", 238], ["Deep Dunes", "/_blob/25305483837644c1606ef78747abf2a9", "music/275947173.webm", 248], ["Shallow Shoals", "/_blob/464dcd50c9d3b6ba7d58da3574ffff85", "music/976994244.webm", 417], ["Grimtide Sanctum", "/_blob/4750c7da12534f0b366980ff7a6e0d5a", "music/375929877.webm", 462], ["Necropolis", "/_blob/909ad5e91eeef7541e354ae8964c5c2a", "music/176304831.webm", 298], ["Login Music", "/_blob/5cd84163ba8370cf5ce8b83b2c0cccb6", "music/1031672296.webm", 333], ["Atmospheric Music (22 min)", "/_blob/0eaa8550e5ea21e096fb99147698117e", "music/7986934.webm", 1308], ["Dungeon Atmospheres", "/_blob/050d65d77e316be44516b5df3fb12d77", "music/654090812.webm", 596], ["Tension", "/_blob/8ea37e3d5e5780718a9fde3fa09d0039", "music/218811726.webm", 126], ["Dreamscape I", "/_blob/a80f8ee0954bbc5483b255ff91c3126d", "music/649668183.webm", 80], ["Dreamscape II", "/_blob/7785980ecce220d99a49b9c297d7f3cb", "music/550324845.webm", 74], ["Banker", "/_blob/3bb1bffd45f7dc7ce5cbb47a2d5325cd", "music/1072074132.webm", 99], ["Deep Banker", "/_blob/af84515cb26cd7b907ac90707b35cc0c", "music/706996845.webm", 193], ["Deep Merchant", "/_blob/a5ae2fa15364f2faba0d845f2432b145", "music/111314902.webm", 266], ["Deep Trainer", "/_blob/3cabc1b9e4b4e6a43c6d840190bffe23", "music/437162568.webm", 105]];
-  const $ = id => document.getElementById(id);
-  const list = $("mList"), title = $("mTitle"), status = $("mStatus"), playB = $("mPlay"), shufB = $("mShuf"), vol = $("mVol"), seek = $("mSeek");
-  // Where to find the music: the copies stored with the claude.ai page, or a "music" folder next to this file
-  // (when opened from your computer, or hosted on a site such as GitHub Pages). Try the likely one first, then the other.
-  const onClaude = /(^|\.)claude(usercontent)?\.(ai|com)$/.test(location.hostname) || /claude/.test(location.hostname);
-  const srcFor = (t, alt) => ((onClaude ? !alt : alt) ? t[1] : t[2]);
-  let altTried = false;
-  const au = new Audio(); au.preload = "metadata"; let userPaused = false;
-  let idx = 0, shuffle = false, order = TRACKS.map((_, i) => i), dragging = false;
-  try { const v = localStorage.getItem("mnmMusicVol"); if (v != null) vol.value = v; } catch (e) {}
-  au.volume = vol.value / 100;
-  const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
-  TRACKS.forEach(([name, , , dur], i) => {
-    const li = document.createElement("li"), b = document.createElement("button");
-    b.type = "button"; b.innerHTML = ""; b.textContent = name;
-    const t = document.createElement("span"); t.className = "mdur"; t.textContent = fmt(dur);
-    b.addEventListener("click", () => load(i, true)); li.append(b, " ", t); list.appendChild(li);
-  });
-  const mark = () => { [...list.children].forEach((li, i) => li.classList.toggle("on", i === idx)); title.textContent = TRACKS[idx][0]; };
-  const icon = () => { const p = !au.paused; playB.innerHTML = p ? "&#10074;&#10074;" : "&#9654;"; playB.setAttribute("aria-label", p ? "Pause" : "Play"); };
-  const showTime = () => { if (document.getElementById("music").classList.contains("waiting")) return; const d = au.duration || TRACKS[idx][3]; status.textContent = fmt(au.currentTime) + " / " + fmt(d); if (!dragging) seek.value = d ? au.currentTime / d * 1000 : 0; };
-  function load(i, play) {
-    if (play) userPaused = false;
-    idx = (i + TRACKS.length) % TRACKS.length; mark();
-    altTried = false; au.src = srcFor(TRACKS[idx], false);
-    seek.value = 0; status.textContent = "0:00 / " + fmt(TRACKS[idx][3]);
-    if (play) au.play().catch(() => {});
-  }
-  const step = d => { const p = order.indexOf(idx); load(order[(p + d + order.length) % order.length], true); };
-  $("mPrev").addEventListener("click", () => (au.currentTime > 3 ? (au.currentTime = 0) : step(-1)));
-  $("mNext").addEventListener("click", () => step(1));
-  playB.addEventListener("click", () => {
-    if (!au.src) { load(idx, true); }
-    else if (au.paused) { userPaused = false; au.play().catch(() => {}); }
-    else { userPaused = true; au.pause(); }
-  });
-  shufB.addEventListener("click", () => {
-    shuffle = !shuffle; shufB.setAttribute("aria-pressed", shuffle); order = TRACKS.map((_, i) => i);
-    if (shuffle) for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
-  });
-  vol.addEventListener("input", () => { au.volume = vol.value / 100; try { localStorage.setItem("mnmMusicVol", vol.value); } catch (e) {} });
-  seek.addEventListener("input", () => { dragging = true; const d = au.duration || TRACKS[idx][3]; status.textContent = fmt(seek.value / 1000 * d) + " / " + fmt(d); });
-  seek.addEventListener("change", () => { dragging = false; const d = au.duration || TRACKS[idx][3]; if (!au.src) load(idx, false); au.currentTime = seek.value / 1000 * d; });
-  au.addEventListener("play", icon); au.addEventListener("pause", icon);
-  au.addEventListener("timeupdate", showTime); au.addEventListener("loadedmetadata", showTime);
-  au.addEventListener("ended", () => step(1));
-  au.addEventListener("error", () => {
-    if (!au.src) return;
-    if (!altTried) { // first source failed: try the other one
-      altTried = true; const t = au.currentTime, was = !au.paused || !userPaused;
-      au.src = srcFor(TRACKS[idx], true); if (was) au.play().catch(() => {}); return;
-    }
-    status.textContent = "Can't find this track (keep the music folder next to the page)";
-    icon();
-  });
-  const box = $("music"), listB = $("mListB"), pop = $("mPop");
-  listB.addEventListener("click", () => { const o = pop.hidden; pop.hidden = !o; listB.setAttribute("aria-expanded", o); box.classList.toggle("open", o); });
-  mark(); icon(); status.textContent = "Soundtrack \u00b7 " + TRACKS.length + " tracks";
-  // Autoplay: always try to start when the page opens. Browsers only allow sound after the first interaction with the
-  // page, so if it is blocked the first click, tap or key press anywhere starts it (a small hint says so meanwhile).
-  load(idx, false);
-  const tryPlay = () => au.play().then(() => true).catch(() => false);
-  tryPlay().then(ok => {
-    if (ok) return;
-    status.textContent = "Click anywhere to start the music";
-    box.classList.add("waiting");
-    const kick = ev => {
-      ["pointerdown", "keydown", "touchend"].forEach(t => removeEventListener(t, kick, true));
-      box.classList.remove("waiting");
-      if (ev.target && ev.target.closest && ev.target.closest("#mPlay")) return; // the play button handles its own click
-      if (au.paused && !userPaused) tryPlay();
-    };
-    ["pointerdown", "keydown", "touchend"].forEach(t => addEventListener(t, kick, true));
-  });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && au.paused && !userPaused && au.currentTime > 0) tryPlay(); });
-})();
-</script>
 <script>
 /* ---- Buff timer overlay: pick class + spell (durations from the M&M wiki), drag it anywhere, timers survive reloads ---- */
 (function () {
