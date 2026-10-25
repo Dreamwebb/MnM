@@ -1021,7 +1021,9 @@ td { padding-block: 10px; }
   // A crescent under ~5% lit is too thin to see in game, so the page fades it out.
   // Great: 33-37% lit (average ~35%) and waning in every shot from 10:53 AM to 11:59 PM (~11 game days) => extremely slow;
   //   2000 game days is an estimate.
-  // Gold: fully lit in every shot => full, slow; 360 game days is an estimate.
+  // Gold: full in every shot on 24 Oct (to 11:59 PM), then a ~25% waning crescent (lit lower-left, like the Great moon)
+  //   at 12:06 PM on 25 Oct. That overnight drop gives ~36 game days per cycle, fitted to the most recent shots;
+  //   it doesn't fit the earliest shots on 24 Oct as well, so the cycle length is still an estimate.
   const MOON_EPOCH = Date.UTC(2026, 9, 24, 3, 24, 40); // 2:24 PM AEDT, 24 Oct 2026
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -1031,7 +1033,7 @@ td { padding-block: 10px; }
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
     { name: "Great moon", phase0: .796, cycle: 2000, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .5, cycle: 360, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: 0,
+    { name: "Gold moon",  phase0: .331, cycle: 36, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.7,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { if (m.at) { const a = m.at(gameHour()); m.tilt = a.tilt; return a.p; } const gd = (Date.now() - MOON_EPOCH) / 4320000; return (((m.phase0 + gd / m.cycle) % 1) + 1) % 1; };
