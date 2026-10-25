@@ -362,6 +362,14 @@ td { padding-block: 10px; }
   background: linear-gradient(135deg, transparent 52%, rgba(254, 224, 60, .55) 52% 58%, transparent 58% 68%, rgba(254, 224, 60, .55) 68% 74%, transparent 74%); opacity: .7; }
 .bresize:hover { opacity: 1; }
 .buffs.min .bresize, .buffs.max .bresize { display: none; }
+/* ---- Mob timers (same look as the buff timers, starts on the right) ---- */
+.mobs .badd > input[type=text] { width: 100%; box-sizing: border-box; margin: 0 0 6px; }
+.mobs .mresp { margin-bottom: 6px; }
+.mobs .mresp { gap: 3px; } .mobs .mresp .bchk { flex: 0 0 auto; margin-right: 3px; }
+.mobs .mresp input[type=number] { flex: 1 1 0; width: 0; min-width: 34px; margin: 0; }
+.mobs .mhint { opacity: .6; font-size: 11px; }
+.mobs .blist li.done { animation-duration: .7s; }
+.mobs .mtime { opacity: .55; font-size: 11px; margin-left: 4px; }
 .buffs select, .buffs input[type=text], .buffs input[type=number] { width: 100%; box-sizing: border-box; margin: 0 0 6px; padding: 5px 6px; font: inherit; font-size: 13px; color: #efe6d2; background: rgba(0, 0, 0, .35); border: 1px solid rgba(140, 122, 82, .55); border-radius: 5px; }
 .buffs select option { color: #111; background: #fff; }
 .buffs .brow { display: flex; align-items: center; gap: 6px; }
@@ -1063,9 +1071,13 @@ td { padding-block: 10px; }
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
   // The screenshots show the phases do NOT drift with game time: each moon holds the same phase for a whole real day and
   // then jumps once a day, some time between 11:10 AM and 12:06 PM AEDT (so the page steps at 11:38 AM AEDT = 00:38 UTC).
-  //   Gold:  full all of 24 Oct  -> ~25% waning crescent at 12:06 PM 25 Oct and still ~26% at 3:36 PM  => step ~ +.33/day
-  //   Great: 33-37% waning all of 24 Oct -> ~14% waning at 3:36 PM 25 Oct                               => step ~ +.08/day
-  //   Ice:   ~10% crescent (lit opposite the Great moon) all of 24 Oct afternoon -> ~7% on 25 Oct     => step not measurable yet
+  //   Gold:  full all of 24 Oct  -> ~38% waning crescent on 25 Oct (identical at 3:36 and 5:59 PM)    => step ~ +.29/day
+  //   Great: 33-37% waning all of 24 Oct and still 33-36% on 25 Oct (3:36 and 5:59 PM)               => no measurable change yet
+  //   Ice:   ~10% crescent (lit opposite the Great moon) all of 24 Oct afternoon, ~11% on 25 Oct      => no measurable change yet
+  //   The 3:36 and 5:59 PM shots on 25 Oct are two game days apart yet show the same phases, which confirms the daily steps.
+  //   Tilt: in an upright view (7:24 PM 25 Oct shot) the Great and Gold moons are lit on the left (~3-4 deg below horizontal)
+  //   and the Ice moon on the right. Shots looking straight up rotate this, so the earlier diagonal angles were the camera.
+  //   7:24 PM 25 Oct: Great 35%, Gold ~39%, Ice ~11% - unchanged since 3:36 PM.
   // "p" is each moon's phase on the moon day that began 25 Oct; the step sizes are estimates from one change each.
   const MOON_DAY0 = Date.UTC(2026, 9, 25, 0, 38); // 11:38 AM AEDT, 25 Oct 2026
   const MOON_EPOCH = MOON_DAY0;
@@ -1073,11 +1085,11 @@ td { padding-block: 10px; }
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .085, step: 0,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: -.7,
+    { name: "Ice moon",   phase0: .108, step: 0,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 0,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .878, step: .078, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.7,
+    { name: "Great moon", phase0: .800, step: 0, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.05,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .830, step: .333, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.7,
+    { name: "Gold moon",  phase0: .789, step: .289, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.06,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { if (m.at) { const a = m.at(gameHour()); m.tilt = a.tilt; return a.p; } const day = Math.floor((Date.now() - MOON_DAY0) / 86400000); return (((m.phase0 + day * m.step) % 1) + 1) % 1; };
@@ -1398,6 +1410,32 @@ td { padding-block: 10px; }
     </div>
     <div class="bresize" id="bResize" title="Drag to resize (double-click to reset)" aria-hidden="true"></div>
   </aside>
+  <aside class="buffs mobs" id="mobs" aria-label="Mob timers">
+    <div class="bhead" id="mHead" title="Drag to move">
+      <span class="bgrip" aria-hidden="true">&#10303;</span><span class="btitle">Mob timers</span><span class="bcount" id="mCount"></span>
+      <button type="button" id="mMax" aria-label="Maximise mob timers" title="Maximise">&#10530;</button>
+      <button type="button" id="mMin" aria-label="Minimise mob timers" title="Minimise">&#8211;</button>
+    </div>
+    <div class="bbody" id="mBody">
+      <div class="badd">
+        <input type="text" id="mName" list="mKnown" placeholder="Mob name" aria-label="Mob name" autocomplete="off">
+        <datalist id="mKnown"></datalist>
+        <div class="brow mresp"><span class="bchk">Respawn</span>
+          <input type="number" id="mH" min="0" max="99" value="0" aria-label="Hours"><span>h</span>
+          <input type="number" id="mM" min="0" max="59" value="6" aria-label="Minutes"><span>m</span>
+          <input type="number" id="mS" min="0" max="59" value="0" aria-label="Seconds"><span>s</span></div>
+        <div class="brow">
+          <span class="bchk mhint">Start when it dies</span>
+          <button type="button" id="mStart" class="bgo" title="Start the respawn timer, or restart it if this mob is already being tracked">Start</button><button type="button" id="mPlus" class="bgo bplus" title="Track another one (e.g. the same mob at a second spawn point)" aria-label="Add another mob timer">+</button>
+        </div>
+      </div>
+      <div class="brow bsound"><label class="bchk" for="mSound">Alarm</label><select id="mSound" aria-label="Mob alarm sound"></select><button type="button" id="mSTest" class="bgo bplus" title="Play the alarm" aria-label="Play the mob alarm">&#9654;</button></div>
+      <div class="brow bsound"><label class="bchk" for="mWarn">Warn before</label><select id="mWarn" aria-label="Warn before respawn"></select></div>
+      <ul class="blist" id="mList"></ul>
+      <p class="bnote">Click a mob's name in the box to reuse its respawn time. Timers keep running if you reload.</p>
+    </div>
+    <div class="bresize" id="mResize" title="Drag to resize (double-click to reset)" aria-hidden="true"></div>
+  </aside>
 <script>
 /* ---- Buff timer overlay: pick class + spell (durations from the M&M wiki), drag it anywhere, timers survive reloads ---- */
 (function () {
@@ -1529,6 +1567,7 @@ td { padding-block: 10px; }
   const alarm = key => { const k = key || sndSel.value; if (k === "off") return; if (k === "synth" || !SOUNDS[k]) return beep();
     try { const a = new Audio(SOUNDS[k][1]); a.volume = .85; a.play().catch(() => beep()); } catch (e) { beep(); } };
   const chime = k => alarm(k);
+  window.MNM_ALARM = { play: k => alarm(k), sounds: SOUNDS };
   const beep = () => { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const t0 = actx.currentTime;
     [880, 660].forEach((f, k) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; o.type = "sine";
       g.gain.setValueAtTime(0, t0 + k * .18); g.gain.linearRampToValueAtTime(.18, t0 + k * .18 + .02); g.gain.exponentialRampToValueAtTime(.001, t0 + k * .18 + .5);
@@ -1606,6 +1645,116 @@ td { padding-block: 10px; }
   const end = () => { if (!drag) return; drag = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmBuffPos", [r.left, r.top]); };
   head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
   addEventListener("resize", () => { if (box.classList.contains("max")) return setMax(true); const sz = load("mnmBuffSize", null); if (sz) applySize(sz); const r = box.getBoundingClientRect(); place(r.left, r.top); });
+})();
+</script>
+<script>
+/* ---- Mob timers: name a mob, set its respawn time, start it when the mob dies. Uses the buff timers' alarm sounds. ---- */
+(function () {
+  const $ = id => document.getElementById(id);
+  const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+  const box = $("mobs"), head = $("mHead"), list = $("mList"), count = $("mCount"), nameIn = $("mName");
+  const A = window.MNM_ALARM || { play: () => {}, sounds: {} };
+  const fmt = s => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    return h ? h + ":" + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0") : m + ":" + String(x).padStart(2, "0"); };
+  const fmtSpan = s => (s >= 3600 ? Math.floor(s / 3600) + "h " : "") + (s % 3600 >= 60 ? Math.floor(s % 3600 / 60) + "m " : "") + (s % 60 ? s % 60 + "s" : "");
+  let mobs = load("mnmMobTimers", []), known = load("mnmMobKnown", {});
+  // sounds and warning (own settings so mobs can sound different from buffs)
+  const sndSel = $("mSound");
+  [["off", "Off"], ["synth", "Classic chime"]].concat(Object.entries(A.sounds).map(([k, v]) => [k, v[0]])).forEach(([k, n]) => sndSel.add(new Option(n, k)));
+  sndSel.value = load("mnmMobSound", "ding"); if (sndSel.selectedIndex < 0) sndSel.value = "synth";
+  sndSel.addEventListener("change", () => { store("mnmMobSound", sndSel.value); A.play(sndSel.value); });
+  $("mSTest").addEventListener("click", () => A.play(sndSel.value));
+  const WARNS = [[0, "Off"], [10, "10 sec"], [30, "30 sec"], [60, "1 min"], [120, "2 min"], [300, "5 min"], [600, "10 min"]];
+  const warnSel = $("mWarn"); WARNS.forEach(([v, n]) => warnSel.add(new Option(n, v)));
+  warnSel.value = String(load("mnmMobWarn", 30)); if (warnSel.selectedIndex < 0) warnSel.value = "30";
+  warnSel.addEventListener("change", () => { store("mnmMobWarn", +warnSel.value); render(true); });
+  const ring = () => { if (sndSel.value !== "off") A.play(sndSel.value); };
+  // remembered mobs: picking a known name fills in its respawn time
+  const drawKnown = () => { $("mKnown").innerHTML = ""; Object.keys(known).sort().forEach(n => $("mKnown").appendChild(new Option(n))); };
+  const setFields = s => { $("mH").value = Math.floor(s / 3600); $("mM").value = Math.floor(s % 3600 / 60); $("mS").value = s % 60; };
+  nameIn.addEventListener("input", () => { const k = Object.keys(known).find(n => n.toLowerCase() === nameIn.value.trim().toLowerCase()); if (k) setFields(known[k]); });
+  const secs = () => (+$("mH").value || 0) * 3600 + (+$("mM").value || 0) * 60 + (+$("mS").value || 0);
+  const start = extra => {
+    const dur = Math.round(secs()); if (!(dur > 0)) return;
+    const name = nameIn.value.trim() || "Mob";
+    known[name] = dur; store("mnmMobKnown", known); drawKnown();
+    const ex = !extra && mobs.find(t => t.name === name || t.base === name);
+    if (ex) { ex.dur = dur; ex.end = Date.now() + dur * 1000; }
+    else { const n = mobs.filter(t => (t.base || t.name) === name).length;
+      mobs.push({ id: Date.now() + Math.random(), base: name, name: n ? name + " (" + (n + 1) + ")" : name, dur, end: Date.now() + dur * 1000 }); }
+    save(); render(true);
+  };
+  const save = () => store("mnmMobTimers", mobs);
+  $("mStart").addEventListener("click", () => start(false)); $("mPlus").addEventListener("click", () => start(true));
+  nameIn.addEventListener("keydown", e => { if (e.key === "Enter") start(false); });
+  list.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; const t = mobs.find(x => String(x.id) === b.dataset.id); if (!t) return;
+    if (b.dataset.act === "redo") t.end = Date.now() + t.dur * 1000; else if (b.dataset.act === "use") { nameIn.value = t.base || t.name; setFields(t.dur); return; } else mobs = mobs.filter(x => x !== t);
+    save(); render(true);
+  });
+  const warnFor = t => { const w = +warnSel.value; return w > 0 && w < t.dur ? w : 0; };
+  const rowClass = (t, left) => left <= 0 ? "done" : (warnFor(t) && left <= warnFor(t)) ? "soon" : "";
+  const warned = new Set(), rang = new Set();
+  const check = (t, left, now) => {
+    const w = warnFor(t), k = t.id + ":" + t.end;
+    if (w && left > 0 && left <= w && !warned.has(k)) { warned.add(k); if (left > w - 3) ring(); }
+    if (left <= 0 && !rang.has(k)) { rang.add(k); if (now - t.end < 3000) ring(); } };
+  let lastKey = "";
+  function render(force) {
+    const now = Date.now(); mobs.sort((a, b) => a.end - b.end);
+    const key = mobs.map(t => t.id + "|" + t.end + "|" + t.name).join(";");
+    if (!force && key === lastKey && list.children.length === mobs.length) {
+      mobs.forEach((t, i) => { const li = list.children[i], left = (t.end - now) / 1000; li.className = rowClass(t, left);
+        li.querySelector(".bleft").textContent = left > 0 ? fmt(left) : "up!";
+        li.querySelector(".bbar").style.width = Math.max(0, Math.min(1, left / t.dur)) * 100 + "%"; check(t, left, now); });
+    } else {
+      lastKey = key; list.innerHTML = "";
+      mobs.forEach(t => { const left = (t.end - now) / 1000, li = document.createElement("li"); li.className = rowClass(t, left);
+        const bar = document.createElement("span"); bar.className = "bbar"; bar.style.width = Math.max(0, Math.min(1, left / t.dur)) * 100 + "%";
+        const nm = document.createElement("button"); nm.type = "button"; nm.className = "bname"; nm.dataset.id = t.id; nm.dataset.act = "use"; nm.style.cssText = "all:unset;cursor:pointer;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+        nm.textContent = t.name; nm.title = t.name + " · respawn " + fmtSpan(t.dur) + " (click to reuse)";
+        const sp = document.createElement("span"); sp.className = "mtime"; sp.textContent = fmtSpan(t.dur).trim(); nm.appendChild(sp);
+        const lt = document.createElement("span"); lt.className = "bleft"; lt.textContent = left > 0 ? fmt(left) : "up!";
+        const r = document.createElement("button"); r.type = "button"; r.dataset.id = t.id; r.dataset.act = "redo"; r.innerHTML = "&#8635;"; r.title = "Killed again: restart"; r.setAttribute("aria-label", "Restart " + t.name);
+        const x = document.createElement("button"); x.type = "button"; x.dataset.id = t.id; x.dataset.act = "del"; x.innerHTML = "&#10005;"; x.title = "Remove"; x.setAttribute("aria-label", "Remove " + t.name);
+        li.append(bar, nm, lt, r, x); list.appendChild(li); check(t, left, now); });
+    }
+    const active = mobs.filter(t => t.end > now).length, up = mobs.length - active;
+    count.textContent = mobs.length ? active + " waiting" + (up ? " · " + up + " up" : "") : "";
+  }
+  drawKnown(); render(true); setInterval(render, 500);
+  // minimise / maximise / resize / drag (same behaviour as the buff timers)
+  const setMin = m => { box.classList.toggle("min", m); $("mMin").innerHTML = m ? "&#9633;" : "&#8211;"; store("mnmMobMin", m); };
+  const BASE_W = 290;
+  const applySize = sz => { if (!sz) { box.style.width = box.style.height = ""; box.style.removeProperty("--bs"); box.classList.remove("sized"); return; }
+    const w = Math.max(220, Math.min(innerWidth - 8, sz[0])), h = Math.max(160, Math.min(innerHeight - 8, sz[1]));
+    box.style.width = w + "px"; box.style.height = h + "px"; box.style.setProperty("--bs", Math.max(.8, Math.min(2.5, w / BASE_W)).toFixed(3)); box.classList.add("sized"); };
+  const setMax = m => { box.classList.toggle("max", m); if (m) { setMin(false); box.style.setProperty("--bs", Math.max(1, Math.min(2.2, Math.min(innerWidth / 900, innerHeight / 700) * 1.4)).toFixed(3)); }
+    else { const sz = load("mnmMobSize", null); if (sz) applySize(sz); else box.style.removeProperty("--bs"); }
+    $("mMax").innerHTML = m ? "&#10064;" : "&#10530;"; $("mMax").title = m ? "Restore size" : "Maximise"; store("mnmMobMax", m); };
+  setMin(load("mnmMobMin", false)); applySize(load("mnmMobSize", null)); setMax(load("mnmMobMax", false));
+  $("mMin").addEventListener("click", e => { e.stopPropagation(); if (box.classList.contains("max")) setMax(false); setMin(!box.classList.contains("min")); });
+  $("mMax").addEventListener("click", e => { e.stopPropagation(); setMax(!box.classList.contains("max")); });
+  head.addEventListener("dblclick", e => { if (!e.target.closest("button")) setMax(!box.classList.contains("max")); });
+  const place = (x, y) => { const w = box.offsetWidth, h = box.offsetHeight;
+    x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - Math.min(h, 40) - 4, y));
+    box.style.left = x + "px"; box.style.top = y + "px"; };
+  const pos = load("mnmMobPos", null); if (pos) place(pos[0], pos[1]); else place(innerWidth - box.offsetWidth - 14, 90);
+  let drag = null;
+  head.addEventListener("pointerdown", e => { if (e.target.closest("button") || box.classList.contains("max")) return; const r = box.getBoundingClientRect(); drag = [e.clientX - r.left, e.clientY - r.top]; head.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
+  head.addEventListener("pointermove", e => { if (drag) place(e.clientX - drag[0], e.clientY - drag[1]); });
+  const end = () => { if (!drag) return; drag = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmMobPos", [r.left, r.top]); };
+  head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
+  const grip = $("mResize"); let rs = null;
+  grip.addEventListener("pointerdown", e => { e.preventDefault(); const r = box.getBoundingClientRect(); rs = [e.clientX, e.clientY, r.width, r.height, r.left, r.top]; grip.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
+  grip.addEventListener("pointermove", e => { if (rs) applySize([Math.min(innerWidth - rs[4] - 4, rs[2] + e.clientX - rs[0]), Math.min(innerHeight - rs[5] - 4, rs[3] + e.clientY - rs[1])]); });
+  const rsEnd = () => { if (!rs) return; rs = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmMobSize", [Math.round(r.width), Math.round(r.height)]); };
+  grip.addEventListener("pointerup", rsEnd); grip.addEventListener("pointercancel", rsEnd);
+  grip.addEventListener("dblclick", () => { store("mnmMobSize", null); applySize(null); });
+  addEventListener("resize", () => { if (box.classList.contains("max")) return setMax(true); const sz = load("mnmMobSize", null); if (sz) applySize(sz); const r = box.getBoundingClientRect(); place(r.left, r.top); });
+  // bring whichever panel you touch to the front
+  ["buffs", "mobs"].forEach(id => { const el = $(id); if (el) el.addEventListener("pointerdown", () => { document.querySelectorAll(".buffs").forEach(b => b.style.zIndex = ""); el.style.zIndex = 65; }, true); });
 })();
 </script>
 
