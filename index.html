@@ -362,10 +362,33 @@ td { padding-block: 10px; }
   background: linear-gradient(135deg, transparent 52%, rgba(254, 224, 60, .55) 52% 58%, transparent 58% 68%, rgba(254, 224, 60, .55) 68% 74%, transparent 74%); opacity: .7; }
 .bresize:hover { opacity: 1; }
 .buffs.min .bresize, .buffs.max .bresize { display: none; }
+.buffs.snapping { box-shadow: 0 0 0 2px rgba(254, 224, 60, .65), 0 6px 20px rgba(0, 0, 0, .5); }
 /* ---- Side by side: both timer panels maximised, buffs on the left half, mobs on the right half ---- */
 body.tsplit #buffs.max { width: calc(50vw - 18px) !important; }
 body.tsplit #mobs.max { left: calc(50vw + 6px) !important; width: calc(50vw - 18px) !important; }
 body.tsplit .tsplitb { color: var(--gold); }
+/* ---- XP tracker ---- */
+.xpt .bbody { min-height: 0; overflow-y: auto; }
+.xpt .xpbar { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; padding: 4px; margin: 0 0 4px; cursor: ew-resize; touch-action: none; user-select: none;
+  border-radius: 3px; background: linear-gradient(#5a5a5a, #2c2c2c); box-shadow: inset 0 0 0 1px #9a9a9a, inset 0 0 0 3px #1b1b1b; }
+.xpt .xpbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.xpt .xb { position: relative; height: 20px; background: #050505; box-shadow: inset 0 0 0 1px #3a3a3a; overflow: hidden; }
+.xpt .xb.on { background: linear-gradient(180deg, #f9b23a 0%, #e8701a 38%, #c4430f 70%, #f08a22 100%); box-shadow: inset 0 0 0 1px #6a2a08, inset 0 0 8px rgba(255, 220, 120, .35); }
+.xpt .xblue { grid-column: 1 / -1; position: relative; height: 9px; margin-top: 1px; background: #050505; box-shadow: inset 0 0 0 1px #3a3a3a; cursor: ew-resize; }
+.xpt .xblue .bl { position: absolute; left: 0; top: 1px; bottom: 1px; background: #2f8be0; box-shadow: 0 0 4px #4aa3ff; }
+.xpt .xblue .tk { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #2c2c2c; }
+.xpt .xgrid { display: grid; grid-template-columns: auto 1fr 1fr auto; gap: 5px 6px; align-items: center; }
+.xpt .xgrid input { width: 100%; min-width: 0; box-sizing: border-box; margin: 0; }
+.xpt .xh { font-size: 11px; opacity: .6; text-align: center; }
+.xpt .xl { font-size: 12px; opacity: .85; }
+.xpt .xsub { margin: 6px 0 4px; font-size: 11px; opacity: .65; }
+.xpt .xres { margin: 6px 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; }
+.xpt .xres:empty { display: none; }
+.xpt .xres dt, .xpt .xres .k { opacity: .7; }
+.xpt .xres .v { font-weight: 700; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
+.xpt .xbar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(140, 122, 82, .5); overflow: hidden; position: relative; }
+.xpt .xbar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #c4561a, #f39a2a); }
+.xpt .xbar b { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0, 0, 0, .6); }
 /* ---- Mob timers (same look as the buff timers, starts on the right) ---- */
 .mobs .badd > input[type=text] { width: 100%; box-sizing: border-box; margin: 0 0 6px; }
 .mobs .mresp { margin-bottom: 6px; }
@@ -1096,19 +1119,27 @@ body.tsplit .tsplitb { color: var(--gold); }
   //   Tilt: in an upright view (7:24 PM 25 Oct shot) the Great and Gold moons are lit on the left (~3-4 deg below horizontal)
   //   and the Ice moon on the right. Shots looking straight up rotate this, so the earlier diagonal angles were the camera.
   //   7:24 PM 25 Oct: Great 35%, Gold ~39%, Ice ~11% - unchanged since 3:36 PM.
+  //   1:31 AM 27 Oct: Gold flipped to a ~5-6% waxing crescent (as predicted); Great ~37%, Ice ~10% unchanged.
+  //   10:48 PM 27 Oct: all three lit on the same side: Great ~9% (it passed through new), Ice ~33%, Gold ~30% (re-measured at 10:51 PM without its glow).
+  //   So the jumps are NOT a fixed size each day: Great and Ice sat still for ~2.5 days then jumped, and Gold moved +.29 then
+  //   only +.14. The page is anchored to the 27 Oct shot and uses each moon's AVERAGE change per day so far
+  //   11:01 AM 28 Oct (same moon day): Great ~9%, Ice ~34%, Gold ~35% - unchanged overnight, so phases really are fixed within a day.
+  //   Per-day changes seen so far (moon days 23->27 Oct): Gold 0, +.29, +.29, +.11; Great 0, 0, 0, +.30; Ice +.30, 0, 0, +.09.
+  //   No moon moves a fixed amount per day, so the page uses each moon's average over those four days
+  //   (Gold ~+.17, Ice ~+.10, Great ~+.07); predictions for later days are rough until the rule is found.
   // "p" is each moon's phase on the moon day that began 25 Oct; the step sizes are estimates from one change each.
-  const MOON_DAY0 = Date.UTC(2026, 9, 25, 0, 38); // 11:38 AM AEDT, 25 Oct 2026
+  const MOON_DAY0 = Date.UTC(2026, 9, 27, 0, 38); // 11:38 AM AEDT, 27 Oct 2026 (re-anchored to the 10:48 PM shot that day)
   const MOON_EPOCH = MOON_DAY0;
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .108, step: 0,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 0,
+    { name: "Ice moon",   phase0: .195, step: .099,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 0,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .800, step: 0, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.05,
+    { name: "Great moon", phase0: .097, step: .074, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.05,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .789, step: .289, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.06,
-      lit: [255, 246, 212], edge: [232, 200, 128], dark: [80, 64, 30], darkA: .4, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
+    { name: "Gold moon",  phase0: .20, step: .172, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.06,
+      lit: [255, 246, 212], edge: [232, 200, 128], dark: [40, 34, 30], darkA: .12, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { if (m.at) { const a = m.at(gameHour()); m.tilt = a.tilt; return a.p; } const day = Math.floor((Date.now() - MOON_DAY0) / 86400000); return (((m.phase0 + day * m.step) % 1) + 1) % 1; };
   const litOf = p => (1 - Math.cos(2 * Math.PI * p)) / 2;
@@ -1403,6 +1434,7 @@ body.tsplit .tsplitb { color: var(--gold); }
       <span class="bgrip" aria-hidden="true">&#10303;</span><span class="btitle">Buff timers</span><span class="bcount" id="bCount"></span>
       <button type="button" id="bSplit" class="tsplitb" aria-label="Show buff and mob timers side by side" title="Side by side with mob timers">&#9707;</button>
       <button type="button" id="bMax" aria-label="Maximise buff timers" title="Maximise">&#10530;</button>
+      <button type="button" id="bReset" class="breset" aria-label="Reset buff timers size" title="Reset size">&#10226;</button>
       <button type="button" id="bMin" aria-label="Minimise buff timers" title="Minimise">&#8211;</button>
     </div>
     <div class="bbody" id="bBody">
@@ -1434,6 +1466,7 @@ body.tsplit .tsplitb { color: var(--gold); }
       <span class="bgrip" aria-hidden="true">&#10303;</span><span class="btitle">Mob timers</span><span class="bcount" id="mCount"></span>
       <button type="button" id="mSplit" class="tsplitb" aria-label="Show buff and mob timers side by side" title="Side by side with buff timers">&#9707;</button>
       <button type="button" id="mMax" aria-label="Maximise mob timers" title="Maximise">&#10530;</button>
+      <button type="button" id="mReset" class="breset" aria-label="Reset mob timers size" title="Reset size">&#10226;</button>
       <button type="button" id="mMin" aria-label="Minimise mob timers" title="Minimise">&#8211;</button>
     </div>
     <div class="bbody" id="mBody">
@@ -1457,6 +1490,30 @@ body.tsplit .tsplitb { color: var(--gold); }
       <p class="bnote">Mobs you start are saved in the dropdown with their respawn time (&#10005; deletes one); clicking a timer's name also loads it. Timers keep running if you reload.</p>
     </div>
     <div class="bresize" id="mResize" title="Drag to resize (double-click to reset)" aria-hidden="true"></div>
+  </aside>
+  <aside class="buffs xpt" id="xpt" aria-label="XP tracker">
+    <div class="bhead" id="xHead" title="Drag to move">
+      <span class="bgrip" aria-hidden="true">&#10303;</span><span class="btitle">XP tracker</span><span class="bcount" id="xRate"></span>
+      <button type="button" id="xReset" class="breset" aria-label="Reset XP tracker size" title="Reset size">&#10226;</button>
+      <button type="button" id="xMin" aria-label="Minimise XP tracker" title="Minimise">&#8211;</button>
+    </div>
+    <div class="bbody" id="xBody">
+      <div class="xgrid">
+        <span></span><span class="xh">Level</span><span class="xh">XP %</span><span></span>
+        <span class="xl">Start</span><input type="number" id="xSL" min="1" max="60" step="1" aria-label="Starting level"><input type="number" id="xSP" min="0" max="100" step="0.1" aria-label="Starting XP percent"><button type="button" id="xStart" class="bgo" title="Start a new session from this level and XP % (the clock starts now)">Start</button>
+        <div class="xpbar" id="xSBar" role="slider" tabindex="0" aria-label="Starting XP (drag)" aria-valuemin="0" aria-valuemax="100"></div>
+        <span class="xl">Now</span><input type="number" id="xNL" min="1" max="60" step="1" aria-label="Current level"><input type="number" id="xNP" min="0" max="100" step="0.1" aria-label="Current XP percent"><button type="button" id="xUpd" class="bgo" title="Record your current level and XP %">Update</button>
+        <div class="xpbar" id="xNBar" role="slider" tabindex="0" aria-label="Current XP (drag; releasing records an update)" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <p class="xsub" id="xSince">Drag across a bar like your in-game XP bar (each orange bubble is 20%; the blue strip shows progress through the current bubble), or type the %. Then press Start.</p>
+      <details class="bcustom" id="xManD"><summary>Or enter XP gained over a time</summary>
+        <div class="brow"><input type="number" id="xMG" min="0" step="0.1" placeholder="XP %" aria-label="XP gained percent"><span>% in</span><input type="number" id="xMM" min="1" step="1" placeholder="min" aria-label="Minutes"><span>min</span><button type="button" id="xMUse" class="bgo">Use</button></div>
+      </details>
+      <div class="xres" id="xRes"></div>
+      <div class="brow bsound"><label class="bchk" for="xIn">XP in</label><select id="xIn" aria-label="Prediction period"></select></div>
+      <div class="xres" id="xPred"></div>
+    </div>
+    <div class="bresize" id="xResize" title="Drag to resize (double-click to reset)" aria-hidden="true"></div>
   </aside>
 <script>
 /* ---- Buff timer overlay: pick class + spell (durations from the M&M wiki), drag it anywhere, timers survive reloads ---- */
@@ -1670,7 +1727,7 @@ body.tsplit .tsplitb { color: var(--gold); }
   const pos = load("mnmBuffPos", null); if (pos) place(pos[0], pos[1]);
   let drag = null;
   head.addEventListener("pointerdown", e => { if (e.target.closest("button") || box.classList.contains("max")) return; const r = box.getBoundingClientRect(); drag = [e.clientX - r.left, e.clientY - r.top]; head.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
-  head.addEventListener("pointermove", e => { if (drag) place(e.clientX - drag[0], e.clientY - drag[1]); });
+  head.addEventListener("pointermove", e => { if (!drag) return; const s = window.MNM_SNAP ? window.MNM_SNAP(box, e.clientX - drag[0], e.clientY - drag[1]) : [e.clientX - drag[0], e.clientY - drag[1]]; place(s[0], s[1]); });
   const end = () => { if (!drag) return; drag = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmBuffPos", [r.left, r.top]); };
   head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
   addEventListener("resize", () => { if (box.classList.contains("max")) return setMax(true); const sz = load("mnmBuffSize", null); if (sz) applySize(sz); const r = box.getBoundingClientRect(); place(r.left, r.top); });
@@ -1833,7 +1890,7 @@ body.tsplit .tsplitb { color: var(--gold); }
   else { const sz = load("mnmMobSize", null); box.style.left = Math.max(4, innerWidth - (sz ? sz[0] : 290) - 14) + "px"; box.style.top = "90px"; }
   let drag = null;
   head.addEventListener("pointerdown", e => { if (e.target.closest("button") || box.classList.contains("max")) return; const r = box.getBoundingClientRect(); drag = [e.clientX - r.left, e.clientY - r.top]; head.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
-  head.addEventListener("pointermove", e => { if (drag) place(e.clientX - drag[0], e.clientY - drag[1]); });
+  head.addEventListener("pointermove", e => { if (!drag) return; const s = window.MNM_SNAP ? window.MNM_SNAP(box, e.clientX - drag[0], e.clientY - drag[1]) : [e.clientX - drag[0], e.clientY - drag[1]]; place(s[0], s[1]); });
   const end = () => { if (!drag) return; drag = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmMobPos", [r.left, r.top]); };
   head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
   const grip = $("mResize"); let rs = null;
@@ -1845,6 +1902,161 @@ body.tsplit .tsplitb { color: var(--gold); }
   addEventListener("resize", () => { if (box.classList.contains("max")) return setMax(true); const sz = load("mnmMobSize", null); if (sz) applySize(sz); const r = box.getBoundingClientRect(); place(r.left, r.top); });
   // bring whichever panel you touch to the front
   ["buffs", "mobs"].forEach(id => { const el = $(id); if (el) el.addEventListener("pointerdown", () => { document.querySelectorAll(".buffs").forEach(b => b.style.zIndex = ""); el.style.zIndex = 75; }, true); });
+})();
+</script>
+<script>
+/* ---- XP tracker: start level + XP %, update as you go; shows XP/hour, time to level and XP in a chosen time ---- */
+(function () {
+  const $ = id => document.getElementById(id);
+  const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+  const box = $("xpt"), head = $("xHead");
+  let S = load("mnmXp", null); // { sl, sp, st, nl, np, nt, manual: {pct, min} }
+  const num = id => parseFloat($(id).value);
+  const total = (lvl, pct) => (lvl - 1) * 100 + pct; // XP in "percent of a level" units
+  const hm = ms => { const m = Math.round(ms / 60000); if (!isFinite(m) || m < 0) return "—"; const h = Math.floor(m / 60); return h ? h + "h " + String(m % 60).padStart(2, "0") + "m" : m + "m"; };
+  const clock = t => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const pct = v => (Math.round(v * 10) / 10).toFixed(1) + "%";
+  const PER = [[15, "15 minutes"], [30, "30 minutes"], [60, "1 hour"], [120, "2 hours"], [180, "3 hours"], [240, "4 hours"]];
+  PER.forEach(([v, n]) => $("xIn").add(new Option(n, v))); $("xIn").value = String(load("mnmXpIn", 60));
+  $("xIn").addEventListener("change", () => { store("mnmXpIn", +$("xIn").value); draw(); });
+  // draggable XP bars like the in-game one: 5 orange bubbles of 20%, a blue strip under each in 4% sections
+  const bars = {};
+  const makeBar = (barId, inputId, onCommit) => {
+    // like the game: orange bubbles show whole 20% steps; the blue strip under the bar shows progress through the
+    // current bubble in 5 sections of 4% - five full blues roll over into one more orange bubble
+    const el = $(barId), cells = [];
+    for (let i = 0; i < 5; i++) { const c = document.createElement("div"); c.className = "xb"; el.appendChild(c); cells.push(c); }
+    const blue = document.createElement("div"); blue.className = "xblue"; const bl = document.createElement("i"); bl.className = "bl"; blue.appendChild(bl);
+    [20, 40, 60, 80].forEach(x => { const tk = document.createElement("i"); tk.className = "tk"; tk.style.left = x + "%"; blue.appendChild(tk); }); el.appendChild(blue);
+    const show = v => { v = Math.max(0, Math.min(100, v || 0)); const full = Math.floor(v / 20 + 1e-9), part = v - full * 20;
+      cells.forEach((c, i) => c.classList.toggle("on", i < full)); bl.style.width = (full >= 5 ? 0 : part / 20 * 100) + "%";
+      el.setAttribute("aria-valuenow", v); el.setAttribute("aria-valuetext", full + " bubbles + " + Math.round(part / 4 * 10) / 10 + " blue (" + (Math.round(v * 10) / 10) + "%)"); };
+    const frac = x => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(1, (x - r.left - 4) / (r.width - 8))); };
+    // dragging across the bubbles moves the total; dragging along the blue strip sets just the blues for the current bubble
+    let mode = null, base = 0;
+    // blue strip: 200 steps per bubble (0.1% each, effectively smooth); bubbles: 1% steps
+    const r1 = v => Math.round(v * 10) / 10;
+    const valueAt = x => { if (mode === "blue") { const s = Math.round(frac(x) * 200); return r1(Math.min(100, base + s * .1)); }
+      return Math.round(frac(x) * 100); };
+    const set = v => { $(inputId).value = v; show(v); };
+    let dragging = false;
+    el.addEventListener("pointerdown", e => { dragging = true; el.setPointerCapture(e.pointerId);
+      mode = e.target.closest(".xblue") ? "blue" : "all"; base = Math.floor((parseFloat($(inputId).value) || 0) / 20) * 20; if (base >= 100) base = 80;
+      set(valueAt(e.clientX)); e.preventDefault(); });
+    el.addEventListener("pointermove", e => { if (dragging) set(valueAt(e.clientX)); });
+    const up = () => { if (!dragging) return; dragging = false; mode = null; if (onCommit) onCommit(); };
+    el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    el.addEventListener("keydown", e => { const d = e.key === "ArrowRight" || e.key === "ArrowUp" ? .1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -.1 : 0; if (!d) return;
+      e.preventDefault(); const v = (parseFloat($(inputId).value) || 0) + d * (e.shiftKey ? 10 : 1); set(Math.max(0, Math.min(100, Math.round(v * 10) / 10))); });
+    el.addEventListener("keyup", e => { if (onCommit && /Arrow/.test(e.key)) onCommit(); });
+    $(inputId).addEventListener("input", () => show(parseFloat($(inputId).value)));
+    bars[barId] = show; return show;
+  };
+  makeBar("xSBar", "xSP", null);
+  makeBar("xNBar", "xNP", () => $("xUpd").click());
+  const fill = () => { if (!S) return; $("xSL").value = S.sl; $("xSP").value = S.sp; $("xNL").value = S.nl; $("xNP").value = S.np; bars.xSBar(S.sp); bars.xNBar(S.np); };
+  $("xStart").addEventListener("click", () => {
+    const l = num("xSL") || 1, p = num("xSP"); if (!(p >= 0 && p <= 100)) return $("xSP").focus();
+    S = { sl: l, sp: p, st: Date.now(), nl: l, np: p, nt: Date.now(), manual: null }; store("mnmXp", S); fill(); draw(); });
+  $("xSL").value = $("xSL").value || 1; $("xSP").value = $("xSP").value || 0; $("xNL").value = $("xNL").value || $("xSL").value;
+  $("xUpd").addEventListener("click", () => {
+    if (!S) return $("xStart").click();
+    const l = num("xNL") || S.nl, p = num("xNP"); if (!(p >= 0 && p <= 100)) return $("xNP").focus();
+    S.nl = l; S.np = p; S.nt = Date.now(); S.manual = null; store("mnmXp", S); draw(); });
+  ["xNP", "xNL"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("xUpd").click(); }));
+  ["xSP", "xSL"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("xStart").click(); }));
+  $("xMUse").addEventListener("click", () => {
+    const g = num("xMG"), m = num("xMM"); if (!(g > 0) || !(m > 0)) return;
+    const l = num("xNL") || num("xSL") || 1, p = !isNaN(num("xNP")) ? num("xNP") : (num("xSP") || 0);
+    S = Object.assign(S || {}, { sl: S ? S.sl : l, sp: S ? S.sp : p, st: S ? S.st : Date.now(), nl: l, np: p, nt: Date.now(), manual: { pct: g, min: m } });
+    store("mnmXp", S); fill(); draw(); });
+  function rate() { // percent of a level per hour
+    if (!S) return null;
+    if (S.manual) return S.manual.pct / (S.manual.min / 60);
+    const gained = total(S.nl, S.np) - total(S.sl, S.sp), hrs = (S.nt - S.st) / 3600000;
+    return hrs > 0 && gained > 0 ? gained / hrs : null;
+  }
+  const row = (el, k, v) => { const a = document.createElement("span"); a.className = "k"; a.textContent = k; const b = document.createElement("span"); b.className = "v"; b.textContent = v; el.append(a, b); };
+  function draw() {
+    const res = $("xRes"), pred = $("xPred"); res.innerHTML = pred.innerHTML = "";
+    if (!S) { $("xRate").textContent = ""; return; }
+    const now = Date.now(), r = rate();
+    $("xSince").textContent = S.manual ? "Rate from " + pct(S.manual.pct) + " gained in " + S.manual.min + " min." :
+      "Session started " + clock(S.st) + " (" + hm(now - S.st) + " ago) at L" + S.sl + " " + pct(S.sp) + "; last update " + clock(S.nt) + ".";
+    const gained = total(S.nl, S.np) - total(S.sl, S.sp);
+    if (!S.manual) row(res, "XP gained", pct(gained) + " (" + (Math.round(gained / 2) / 10) + " bubbles)");
+    // live estimate of where you are now, assuming the same pace since the last update
+    const est = r ? Math.min(total(S.nl, S.np) + r * (now - S.nt) / 3600000, total(S.nl + 1, 0)) : total(S.nl, S.np);
+    const curPct = est - (S.nl - 1) * 100;
+    const bar = document.createElement("div"); bar.className = "xbar"; bar.title = "Estimated now: " + pct(curPct);
+    const fillI = document.createElement("i"); fillI.style.width = Math.min(100, curPct) + "%"; bar.appendChild(fillI);
+    [20, 40, 60, 80].forEach(x => { const b = document.createElement("b"); b.style.left = x + "%"; bar.appendChild(b); }); res.appendChild(bar);
+    if (!r) { row(res, "XP / hour", "update to see"); $("xRate").textContent = ""; return; }
+    row(res, "XP / hour", pct(r) + " (" + (Math.round(r / 2) / 10) + " bubbles)");
+    const left = 100 - S.np, msLeft = left / r * 3600000, eta = S.nt + msLeft;
+    row(res, "Time to level " + (S.nl + 1), hm(eta - now) + " · ~" + clock(eta));
+    row(res, "Estimated now", "L" + S.nl + " " + pct(Math.min(100, curPct)));
+    $("xRate").textContent = pct(r) + "/h";
+    const mins = +$("xIn").value, g = r * mins / 60, endT = total(S.nl, S.np) + g, endL = Math.floor(endT / 100) + 1, endP = endT - (endL - 1) * 100;
+    row(pred, "XP gained", pct(g) + " (" + (Math.round(g / 2) / 10) + " bubbles)");
+    row(pred, "You'd be at", "L" + endL + " " + pct(endP) + (endL > S.nl ? " (+" + (endL - S.nl) + " level" + (endL - S.nl > 1 ? "s" : "") + ")" : ""));
+  }
+  fill(); draw(); setInterval(draw, 15000);
+  // minimise / drag / resize
+  const setMin = m => { box.classList.toggle("min", m); $("xMin").innerHTML = m ? "&#9633;" : "&#8211;"; store("mnmXpMin", m); };
+  setMin(load("mnmXpMin", false));
+  $("xMin").addEventListener("click", e => { e.stopPropagation(); setMin(!box.classList.contains("min")); });
+  const BASE_W = 290;
+  const applySize = sz => { if (!sz) { box.style.width = box.style.height = ""; box.style.removeProperty("--bs"); box.classList.remove("sized"); return; }
+    const w = Math.max(220, Math.min(innerWidth - 8, sz[0])), h = Math.max(160, Math.min(innerHeight - 8, sz[1]));
+    box.style.width = w + "px"; box.style.height = h + "px"; box.style.setProperty("--bs", Math.max(.8, Math.min(2.5, w / BASE_W)).toFixed(3)); box.classList.add("sized"); };
+  applySize(load("mnmXpSize", null));
+  const place = (x, y) => { const w = box.offsetWidth, h = box.offsetHeight;
+    x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - Math.min(h, 40) - 4, y));
+    box.style.left = x + "px"; box.style.top = y + "px"; };
+  const pos = load("mnmXpPos", null); if (pos) place(pos[0], pos[1]); else place(14, Math.max(90, Math.min(430, innerHeight - box.offsetHeight - 14)));
+  let drag = null;
+  head.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; const r = box.getBoundingClientRect(); drag = [e.clientX - r.left, e.clientY - r.top]; head.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
+  head.addEventListener("pointermove", e => { if (!drag) return; const s = window.MNM_SNAP ? window.MNM_SNAP(box, e.clientX - drag[0], e.clientY - drag[1]) : [e.clientX - drag[0], e.clientY - drag[1]]; place(s[0], s[1]); });
+  const end = () => { if (!drag) return; drag = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmXpPos", [r.left, r.top]); };
+  head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
+  const grip = $("xResize"); let rs = null;
+  grip.addEventListener("pointerdown", e => { e.preventDefault(); const r = box.getBoundingClientRect(); rs = [e.clientX, e.clientY, r.width, r.height, r.left, r.top]; grip.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
+  grip.addEventListener("pointermove", e => { if (rs) applySize([Math.min(innerWidth - rs[4] - 4, rs[2] + e.clientX - rs[0]), Math.min(innerHeight - rs[5] - 4, rs[3] + e.clientY - rs[1])]); });
+  const rsEnd = () => { if (!rs) return; rs = null; box.classList.remove("dragging"); const r = box.getBoundingClientRect(); store("mnmXpSize", [Math.round(r.width), Math.round(r.height)]); };
+  grip.addEventListener("pointerup", rsEnd); grip.addEventListener("pointercancel", rsEnd);
+  grip.addEventListener("dblclick", () => { store("mnmXpSize", null); applySize(null); });
+  addEventListener("resize", () => { const r = box.getBoundingClientRect(); place(r.left, r.top); });
+  box.addEventListener("pointerdown", () => { document.querySelectorAll(".buffs").forEach(b => b.style.zIndex = ""); box.style.zIndex = 75; }, true);
+})();
+/* ---- Floating panels: snap edges together while dragging, and a reset-size button on each ---- */
+(function () {
+  const SNAP = 14, GAP = 4;
+  window.MNM_SNAP = (box, x, y) => {
+    const w = box.offsetWidth, h = box.offsetHeight; let bx = null, by = null;
+    const tryX = v => { if (Math.abs(v - x) <= SNAP && (bx == null || Math.abs(v - x) < Math.abs(bx - x))) bx = v; };
+    const tryY = v => { if (Math.abs(v - y) <= SNAP && (by == null || Math.abs(v - y) < Math.abs(by - y))) by = v; };
+    tryX(GAP); tryX(innerWidth - w - GAP); tryY(GAP); tryY(innerHeight - h - GAP); // window edges
+    document.querySelectorAll("aside.buffs").forEach(o => {
+      if (o === box || o.classList.contains("max") || !o.getClientRects().length) return;
+      const r = o.getBoundingClientRect();
+      const nearY = y < r.bottom + SNAP && y + h > r.top - SNAP, nearX = x < r.right + SNAP && x + w > r.left - SNAP;
+      if (nearY) { tryX(r.right + GAP); tryX(r.left - w - GAP); }   // side by side
+      if (nearX) { tryY(r.bottom + GAP); tryY(r.top - h - GAP); }   // stacked
+      if (nearX || nearY) { tryX(r.left); tryX(r.right - w); tryY(r.top); tryY(r.bottom - h); } // line edges up
+    });
+    box.classList.toggle("snapping", bx != null || by != null);
+    return [bx != null ? bx : x, by != null ? by : y];
+  };
+  document.addEventListener("pointerup", () => document.querySelectorAll("aside.buffs.snapping").forEach(b => b.classList.remove("snapping")));
+  [["buffs", "bResize", "bReset"], ["mobs", "mResize", "mReset"], ["xpt", "xResize", "xReset"]].forEach(([id, grip, btn]) => {
+    const b = document.getElementById(btn), box = document.getElementById(id); if (!b || !box) return;
+    b.addEventListener("click", e => { e.stopPropagation();
+      if (box.classList.contains("max") && window.MNM_PANEL_MAX) window.MNM_PANEL_MAX(id);
+      const g = document.getElementById(grip); if (g) g.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+      const r = box.getBoundingClientRect(); if (r.right > innerWidth - 4) box.style.left = Math.max(4, innerWidth - r.width - 4) + "px"; });
+  });
 })();
 </script>
 
