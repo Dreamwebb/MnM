@@ -384,6 +384,8 @@ body.tsplit .tsplitb { color: var(--gold); }
 .xpt .xsub { margin: 6px 0 4px; font-size: 11px; opacity: .65; }
 .xpt .xres { margin: 6px 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; }
 .xpt .xres:empty { display: none; }
+.xpt .xnote { grid-column: 1 / -1; font-size: 11px; color: #ffb47a; }
+.xpt .xflash { animation: xflash .9s ease-out; } @keyframes xflash { from { background: rgba(254, 224, 60, .28); } to { background: transparent; } }
 .xpt .xres dt, .xpt .xres .k { opacity: .7; }
 .xpt .xres .v { font-weight: 700; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; }
 .xpt .xbar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: rgba(0, 0, 0, .45); border: 1px solid rgba(140, 122, 82, .5); overflow: hidden; position: relative; }
@@ -1960,10 +1962,16 @@ body.tsplit .tsplitb { color: var(--gold); }
     const l = num("xSL") || 1, p = num("xSP"); if (!(p >= 0 && p <= 100)) return $("xSP").focus();
     S = { sl: l, sp: p, st: Date.now(), nl: l, np: p, nt: Date.now(), manual: null }; store("mnmXp", S); fill(); draw(); });
   $("xSL").value = $("xSL").value || 1; $("xSP").value = $("xSP").value || 0; $("xNL").value = $("xNL").value || $("xSL").value;
+  let note = "";
   $("xUpd").addEventListener("click", () => {
     if (!S) return $("xStart").click();
-    const l = num("xNL") || S.nl, p = num("xNP"); if (!(p >= 0 && p <= 100)) return $("xNP").focus();
-    S.nl = l; S.np = p; S.nt = Date.now(); S.manual = null; store("mnmXp", S); draw(); });
+    let l = num("xNL") || S.nl; const p = num("xNP"); if (!(p >= 0 && p <= 100)) return $("xNP").focus();
+    note = "";
+    // XP % dropped a lot but the level box wasn't changed: you almost certainly levelled up
+    if (l === S.nl && p < S.np - 15) { l = S.nl + 1; $("xNL").value = l; note = "Level-up detected: now level " + l + "."; }
+    else if (total(l, p) < total(S.nl, S.np)) note = "XP went down since the last update (death?). The rate counts from your start.";
+    S.nl = l; S.np = p; S.nt = Date.now(); S.manual = null; store("mnmXp", S); draw();
+    const fx = $("xRes"); fx.classList.remove("xflash"); void fx.offsetWidth; fx.classList.add("xflash"); });
   ["xNP", "xNL"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("xUpd").click(); }));
   ["xSP", "xSL"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("xStart").click(); }));
   $("xMUse").addEventListener("click", () => {
@@ -1982,8 +1990,8 @@ body.tsplit .tsplitb { color: var(--gold); }
     const res = $("xRes"), pred = $("xPred"); res.innerHTML = pred.innerHTML = "";
     if (!S) { $("xRate").textContent = ""; return; }
     const now = Date.now(), r = rate();
-    $("xSince").textContent = S.manual ? "Rate from " + pct(S.manual.pct) + " gained in " + S.manual.min + " min." :
-      "Session started " + clock(S.st) + " (" + hm(now - S.st) + " ago) at L" + S.sl + " " + pct(S.sp) + "; last update " + clock(S.nt) + ".";
+    $("xUpd").textContent = "Update"; $("xSince").textContent = S.manual ? "Rate from " + pct(S.manual.pct) + " gained in " + S.manual.min + " min." :
+      "Session started " + clock(S.st) + " (" + hm(now - S.st) + " ago) at L" + S.sl + " " + pct(S.sp) + "; last update " + clock(S.nt) + " at L" + S.nl + " " + pct(S.np) + ".";
     const gained = total(S.nl, S.np) - total(S.sl, S.sp);
     if (!S.manual) row(res, "XP gained", pct(gained) + " (" + (Math.round(gained / 2) / 10) + " bubbles)");
     // live estimate of where you are now, assuming the same pace since the last update
@@ -1992,13 +2000,15 @@ body.tsplit .tsplitb { color: var(--gold); }
     const bar = document.createElement("div"); bar.className = "xbar"; bar.title = "Estimated now: " + pct(curPct);
     const fillI = document.createElement("i"); fillI.style.width = Math.min(100, curPct) + "%"; bar.appendChild(fillI);
     [20, 40, 60, 80].forEach(x => { const b = document.createElement("b"); b.style.left = x + "%"; bar.appendChild(b); }); res.appendChild(bar);
-    if (!r) { row(res, "XP / hour", "update to see"); $("xRate").textContent = ""; return; }
+    if (note) { const n = document.createElement("span"); n.className = "xnote"; n.textContent = note; res.appendChild(n); }
+    if (!r) { row(res, "XP / hour", gained < 0 ? "XP is below your start" : S.nt === S.st ? "press Update after gaining XP" : "no XP gained yet"); $("xRate").textContent = ""; return; }
+    const mins = (S.nt - S.st) / 60000; if (!S.manual && mins < 5) { const n = document.createElement("span"); n.className = "xnote"; n.textContent = "Only " + Math.max(1, Math.round(mins)) + " min of data, so the rate is rough."; res.appendChild(n); }
     row(res, "XP / hour", pct(r) + " (" + (Math.round(r / 2) / 10) + " bubbles)");
     const left = 100 - S.np, msLeft = left / r * 3600000, eta = S.nt + msLeft;
     row(res, "Time to level " + (S.nl + 1), hm(eta - now) + " · ~" + clock(eta));
     row(res, "Estimated now", "L" + S.nl + " " + pct(Math.min(100, curPct)));
     $("xRate").textContent = pct(r) + "/h";
-    const mins = +$("xIn").value, g = r * mins / 60, endT = total(S.nl, S.np) + g, endL = Math.floor(endT / 100) + 1, endP = endT - (endL - 1) * 100;
+    const pm = +$("xIn").value, g = r * pm / 60, endT = total(S.nl, S.np) + g, endL = Math.floor(endT / 100) + 1, endP = endT - (endL - 1) * 100;
     row(pred, "XP gained", pct(g) + " (" + (Math.round(g / 2) / 10) + " bubbles)");
     row(pred, "You'd be at", "L" + endL + " " + pct(endP) + (endL > S.nl ? " (+" + (endL - S.nl) + " level" + (endL - S.nl > 1 ? "s" : "") + ")" : ""));
   }
