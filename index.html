@@ -373,7 +373,8 @@ body.tsplit .tsplitb { color: var(--gold); }
   border-radius: 3px; background: linear-gradient(#5a5a5a, #2c2c2c); box-shadow: inset 0 0 0 1px #9a9a9a, inset 0 0 0 3px #1b1b1b; }
 .xpt .xpbar:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 .xpt .xb { position: relative; height: 20px; background: #050505; box-shadow: inset 0 0 0 1px #3a3a3a; overflow: hidden; }
-.xpt .xb.on { background: linear-gradient(180deg, #f9b23a 0%, #e8701a 38%, #c4430f 70%, #f08a22 100%); box-shadow: inset 0 0 0 1px #6a2a08, inset 0 0 8px rgba(255, 220, 120, .35); }
+.xpt .xb .yf { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(180deg, #f9b23a 0%, #e8701a 38%, #c4430f 70%, #f08a22 100%); box-shadow: inset 0 0 8px rgba(255, 220, 120, .35); }
+.xpt .xb.on { box-shadow: inset 0 0 0 1px #6a2a08; }
 .xpt .xblue { grid-column: 1 / -1; position: relative; height: 9px; margin-top: 1px; background: #050505; box-shadow: inset 0 0 0 1px #3a3a3a; cursor: ew-resize; }
 .xpt .xblue .bl { position: absolute; left: 0; top: 1px; bottom: 1px; background: #2f8be0; box-shadow: 0 0 4px #4aa3ff; }
 .xpt .xblue .tk { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #2c2c2c; }
@@ -392,6 +393,10 @@ body.tsplit .tsplitb { color: var(--gold); }
 .xpt .xbar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #c4561a, #f39a2a); }
 .xpt .xbar b { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0, 0, 0, .6); }
 /* ---- Mob timers (same look as the buff timers, starts on the right) ---- */
+.buffs.mobs { width: min(360px, calc(100vw - 28px)); }
+.mobs .bcount, .mobs .bchk, .mobs .mhint, .mobs .mresp span, .mobs .bleft, .mobs .mtime, .mobs .msavedb span { white-space: nowrap; }
+.mobs .blist .bname { white-space: nowrap; }
+.mobs .mnote { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mobs .badd > input[type=text] { width: 100%; box-sizing: border-box; margin: 0 0 6px; }
 .mobs .mresp { margin-bottom: 6px; }
 .mobs .msaved { position: relative; margin-bottom: 6px; }
@@ -1113,7 +1118,7 @@ body.tsplit .tsplitb { color: var(--gold); }
   // ---- Moons ----
   // Phase: 0 = new, .5 = full; under .5 the right side is lit, over .5 the left side.
   // The screenshots show the phases do NOT drift with game time: each moon holds the same phase for a whole real day and
-  // then jumps once a day, some time between 11:10 AM and 12:06 PM AEDT (so the page steps at 11:38 AM AEDT = 00:38 UTC).
+  // then jumps once a day, some time between 12:03 and 12:06 PM AEDT (the page steps at 12:05 PM AEDT = 01:05 UTC).
   //   Gold:  full all of 24 Oct  -> ~38% waning crescent on 25 Oct (identical at 3:36 and 5:59 PM)    => step ~ +.29/day
   //   Great: 33-37% waning all of 24 Oct and still 33-36% on 25 Oct (3:36 and 5:59 PM)               => no measurable change yet
   //   Ice:   ~10% crescent (lit opposite the Great moon) all of 24 Oct afternoon, ~11% on 25 Oct      => no measurable change yet
@@ -1129,18 +1134,23 @@ body.tsplit .tsplitb { color: var(--gold); }
   //   Per-day changes seen so far (moon days 23->27 Oct): Gold 0, +.29, +.29, +.11; Great 0, 0, 0, +.30; Ice +.30, 0, 0, +.09.
   //   No moon moves a fixed amount per day, so the page uses each moon's average over those four days
   //   (Gold ~+.17, Ice ~+.10, Great ~+.07); predictions for later days are rough until the rule is found.
+  //   7:28 PM 28 Oct (after that day's change): Gold FULL (+.30 again), Great ~9% and Ice ~34% unchanged.
+  //   Gold has now moved +.29 on four of its five changes, so it steps +.289/day. Great and Ice stay put on most days
+  //   (Great has jumped once, Ice twice since 24 Oct, at no clear interval), so the page holds them where they were last seen.
+  //   12:03 PM 29 Oct: still unchanged (Gold full, Great ~12%, Ice ~35%). With the change already done by 12:06 PM on 25 Oct,
+  //   a fixed daily change time must fall between 12:03 and 12:06 PM AEDT, so the page now changes the moons at 12:05 PM.
   // "p" is each moon's phase on the moon day that began 25 Oct; the step sizes are estimates from one change each.
-  const MOON_DAY0 = Date.UTC(2026, 9, 27, 0, 38); // 11:38 AM AEDT, 27 Oct 2026 (re-anchored to the 10:48 PM shot that day)
+  const MOON_DAY0 = Date.UTC(2026, 9, 28, 1, 5); // 12:05 PM AEDT, 28 Oct 2026 (daily change time; anchored to the 7:28 PM shot that day)
   const MOON_EPOCH = MOON_DAY0;
   const UP_HOURS = 20; // how long a moon stays above the horizon (game hours), estimated from screenshots
   const craterSet = (seed, count) => { let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
     return Array.from({ length: count }, () => { const a = r() * 6.283, d = Math.sqrt(r()) * .8; return [Math.cos(a) * d, Math.sin(a) * d, .05 + r() * .15]; }); };
   const MOONS = [
-    { name: "Ice moon",   phase0: .195, step: .099,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 0,
+    { name: "Ice moon",   phase0: .195, step: 0,  rise: 18.47, bb: .62, bl: .5, bs: .09, min: 11, tilt: 0,
       lit: [222, 252, 255], edge: [130, 220, 236], dark: [22, 28, 38], darkA: .85, glow: [130, 225, 240], crater: [90, 170, 195], craters: craterSet(11, 16) },
-    { name: "Great moon", phase0: .097, step: .074, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.05,
+    { name: "Great moon", phase0: .097, step: 0, rise: 10.67, bb: .78, bl: .42, bs: .16, min: 18, tilt: -.05,
       lit: [242, 246, 252], edge: [184, 198, 222], dark: [28, 32, 42], darkA: .92, glow: [200, 215, 245], crater: [125, 135, 160], craters: craterSet(5, 22) },
-    { name: "Gold moon",  phase0: .20, step: .172, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.06,
+    { name: "Gold moon",  phase0: .50, step: .289, rise: 4.67, bb: .66, bl: .45, bs: .05, min: 7, tilt: -.06,
       lit: [255, 246, 212], edge: [232, 200, 128], dark: [40, 34, 30], darkA: .12, glow: [255, 222, 140], crater: [195, 165, 95], craters: craterSet(23, 6) }
   ];
   const phaseOf = m => { if (m.at) { const a = m.at(gameHour()); m.tilt = a.tilt; return a.p; } const day = Math.floor((Date.now() - MOON_DAY0) / 86400000); return (((m.phase0 + day * m.step) % 1) + 1) % 1; };
@@ -1489,7 +1499,7 @@ body.tsplit .tsplitb { color: var(--gold); }
       <div class="brow bsound"><label class="bchk" for="mSound" title="Used by mobs without their own alarm (set one with the bell on each timer)">Default alarm</label><select id="mSound" aria-label="Mob alarm sound"></select><button type="button" id="mSTest" class="bgo bplus" title="Play the alarm" aria-label="Play the mob alarm">&#9654;</button></div>
       <div class="brow bsound"><label class="bchk" for="mWarn">Warn before</label><select id="mWarn" aria-label="Warn before respawn"></select></div>
       <ul class="blist" id="mList"></ul>
-      <p class="bnote">Mobs you start are saved in the dropdown with their respawn time (&#10005; deletes one); clicking a timer's name also loads it. Timers keep running if you reload.</p>
+      <p class="bnote mnote" title="Mobs you start are saved in the dropdown (&#10005; deletes one); clicking a timer's name loads it back. Timers keep running if you reload.">Started mobs are saved in the dropdown · timers survive a reload.</p>
     </div>
     <div class="bresize" id="mResize" title="Drag to resize (double-click to reset)" aria-hidden="true"></div>
   </aside>
@@ -1863,7 +1873,7 @@ body.tsplit .tsplitb { color: var(--gold); }
   drawKnown(); render(true); setInterval(render, 500);
   // minimise / maximise / resize / drag (same behaviour as the buff timers)
   const setMin = m => { box.classList.toggle("min", m); $("mMin").innerHTML = m ? "&#9633;" : "&#8211;"; store("mnmMobMin", m); };
-  const BASE_W = 290;
+  const BASE_W = 360;
   const applySize = sz => { if (!sz) { box.style.width = box.style.height = ""; box.style.removeProperty("--bs"); box.classList.remove("sized"); return; }
     const w = Math.max(220, Math.min(innerWidth - 8, sz[0])), h = Math.max(160, Math.min(innerHeight - 8, sz[1]));
     box.style.width = w + "px"; box.style.height = h + "px"; box.style.setProperty("--bs", Math.max(.8, Math.min(2.5, w / BASE_W)).toFixed(3)); box.classList.add("sized"); };
@@ -1889,7 +1899,7 @@ body.tsplit .tsplitb { color: var(--gold); }
     x = Math.max(4, Math.min(innerWidth - w - 4, x)); y = Math.max(4, Math.min(innerHeight - Math.min(h, 40) - 4, y));
     box.style.left = x + "px"; box.style.top = y + "px"; };
   const pos = load("mnmMobPos", null); if (pos && !box.classList.contains("max")) place(pos[0], pos[1]); else if (pos) { box.style.left = pos[0] + "px"; box.style.top = pos[1] + "px"; }
-  else { const sz = load("mnmMobSize", null); box.style.left = Math.max(4, innerWidth - (sz ? sz[0] : 290) - 14) + "px"; box.style.top = "90px"; }
+  else { const sz = load("mnmMobSize", null); box.style.left = Math.max(4, innerWidth - (sz ? sz[0] : 360) - 14) + "px"; box.style.top = "90px"; }
   let drag = null;
   head.addEventListener("pointerdown", e => { if (e.target.closest("button") || box.classList.contains("max")) return; const r = box.getBoundingClientRect(); drag = [e.clientX - r.left, e.clientY - r.top]; head.setPointerCapture(e.pointerId); box.classList.add("dragging"); });
   head.addEventListener("pointermove", e => { if (!drag) return; const s = window.MNM_SNAP ? window.MNM_SNAP(box, e.clientX - drag[0], e.clientY - drag[1]) : [e.clientX - drag[0], e.clientY - drag[1]]; place(s[0], s[1]); });
@@ -1928,26 +1938,34 @@ body.tsplit .tsplitb { color: var(--gold); }
     // like the game: orange bubbles show whole 20% steps; the blue strip under the bar shows progress through the
     // current bubble in 5 sections of 4% - five full blues roll over into one more orange bubble
     const el = $(barId), cells = [];
-    for (let i = 0; i < 5; i++) { const c = document.createElement("div"); c.className = "xb"; el.appendChild(c); cells.push(c); }
+    for (let i = 0; i < 5; i++) { const c = document.createElement("div"); c.className = "xb"; const f = document.createElement("i"); f.className = "yf"; c.appendChild(f); el.appendChild(c); cells.push(c); }
     const blue = document.createElement("div"); blue.className = "xblue"; const bl = document.createElement("i"); bl.className = "bl"; blue.appendChild(bl);
     [20, 40, 60, 80].forEach(x => { const tk = document.createElement("i"); tk.className = "tk"; tk.style.left = x + "%"; blue.appendChild(tk); }); el.appendChild(blue);
     const show = v => { v = Math.max(0, Math.min(100, v || 0)); const full = Math.floor(v / 20 + 1e-9), part = v - full * 20;
-      cells.forEach((c, i) => c.classList.toggle("on", i < full)); bl.style.width = (full >= 5 ? 0 : part / 20 * 100) + "%";
+      // full bubbles are solid orange; the bubble being filled grows in step with the blue strip
+      cells.forEach((c, i) => { c.classList.toggle("on", i < full); c.firstChild.style.width = (i < full ? 100 : i === full ? part / 20 * 100 : 0) + "%"; });
+      bl.style.width = (full >= 5 ? 0 : part / 20 * 100) + "%";
       el.setAttribute("aria-valuenow", v); el.setAttribute("aria-valuetext", full + " bubbles + " + Math.round(part / 4 * 10) / 10 + " blue (" + (Math.round(v * 10) / 10) + "%)"); };
     const frac = x => { const r = el.getBoundingClientRect(); return Math.max(0, Math.min(1, (x - r.left - 4) / (r.width - 8))); };
     // dragging across the bubbles moves the total; dragging along the blue strip sets just the blues for the current bubble
     let mode = null, base = 0;
     // blue strip: 200 steps per bubble (0.1% each, effectively smooth); bubbles: 1% steps
     const r1 = v => Math.round(v * 10) / 10;
-    const valueAt = x => { if (mode === "blue") { const s = Math.round(frac(x) * 200); return r1(Math.min(100, base + s * .1)); }
+    // blue drag is relative: moving the full width of the blue strip = one bubble (20%), and it carries into / out of the
+    // orange bubbles as you go, so the bubbles move in proportion; a click without dragging sets the blue directly
+    let x0 = 0, v0 = 0, moved = false;
+    const valueAt = x => { if (mode === "blue") { const r = el.getBoundingClientRect();
+        if (!moved && Math.abs(x - x0) < 3) return r1(Math.min(100, base + Math.round(frac(x) * 200) * .1));
+        moved = true; return r1(Math.max(0, Math.min(100, v0 + (x - x0) / Math.max(1, r.width - 8) * 20))); }
       return Math.round(frac(x) * 100); };
     const set = v => { $(inputId).value = v; show(v); };
     let dragging = false;
     el.addEventListener("pointerdown", e => { dragging = true; el.setPointerCapture(e.pointerId);
       mode = e.target.closest(".xblue") ? "blue" : "all"; base = Math.floor((parseFloat($(inputId).value) || 0) / 20) * 20; if (base >= 100) base = 80;
-      set(valueAt(e.clientX)); e.preventDefault(); });
+      x0 = e.clientX; v0 = parseFloat($(inputId).value) || 0; moved = false;
+      if (mode === "all") set(valueAt(e.clientX)); e.preventDefault(); });
     el.addEventListener("pointermove", e => { if (dragging) set(valueAt(e.clientX)); });
-    const up = () => { if (!dragging) return; dragging = false; mode = null; if (onCommit) onCommit(); };
+    const up = e => { if (!dragging) return; if (mode === "blue" && !moved && e && e.clientX != null) set(valueAt(e.clientX)); dragging = false; mode = null; if (onCommit) onCommit(); };
     el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
     el.addEventListener("keydown", e => { const d = e.key === "ArrowRight" || e.key === "ArrowUp" ? .1 : e.key === "ArrowLeft" || e.key === "ArrowDown" ? -.1 : 0; if (!d) return;
       e.preventDefault(); const v = (parseFloat($(inputId).value) || 0) + d * (e.shiftKey ? 10 : 1); set(Math.max(0, Math.min(100, Math.round(v * 10) / 10))); });
